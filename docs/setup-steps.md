@@ -62,6 +62,16 @@ Pattern: mount repo → `pip install -e .` (or `uv`-less plain pip) → run heav
 The driver notebook also **streams** CrudeOilMix (HF datasets streaming) so we never download the full multi-GB benchmark.
 **Accept:** `notebooks/00_free_tier_driver.py` runs top-to-bottom on a free Colab CPU session (verify in Phase 1 kickoff).
 
+**WSL verification (2026-09-18):** `scripts/colab-wsl-test.sh` replicates the Colab
+pattern on Linux (clone → venv → editable install → sanity → headless marimo check →
+pytest): all green, 17/17 tests. Two verified findings recorded in
+`docs/data_provenance.md`: (1) CrudeOilMix's assay detail is nested in `mix_json`;
+(2) Electric Sheep pricing is an annual 1999–2025 per-grade series (Bonny Light,
+Forcados, Qua Iboe, Brass River, Escravos + Brent spreads) — usable as a
+labeled-synthetic crude-cost anchor; product prices still come from EIA. Note:
+`marimo export script` validates structure but does not execute network probes —
+run probe cells as a script to test connectivity.
+
 ## Step 9 — Deployment path (Phase 6, not now)
 1. Fork `huggingface.co/spaces/marimo-team/marimo-app-template` → new Space.
 2. Copy `app/app.py` → `app.py` in the Space; list deps in Space `requirements.txt` (pinned versions from `uv.lock`).

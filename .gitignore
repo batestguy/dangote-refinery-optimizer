@@ -14,6 +14,9 @@ venv/
 .mypy_cache/
 .marimo/
 
+# Local Colab/WSL test scratch (standalone uv, venvs, caches)
+.colab-test/
+
 # Data — raw/processed never committed (see docs/setup-steps.md step 8)
 data/raw/
 data/processed/
