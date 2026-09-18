@@ -37,5 +37,6 @@ uv run marimo run app/app.py   # app locally; same file deploys to HF Spaces
 - Dual CV in Phase 3: random 5-fold (headline) + leave-crude-out GroupKFold (honesty) — always report both.
 - Baseline contract: DE always reported vs equal-weight + random + LP (spec §3.4).
 - **Windows gotchas:** uv picked a broken LibreOffice Python — fixed via `uv python install 3.12` + `.python-version`; console is cp1252 — prefix marimo CLI with `PYTHONUTF8=1` when output has emoji; use POSIX bash syntax.
+- **Storage decision (user-locked 2026-09-18):** project stays on `D:\Dangote` even though D: is an external USB drive — benchmarked vs C: (Samsung SSD): seq-write 35 vs 295 MB/s (8.4×), small-file create 322 vs 848 files/s (2.6×). Reads ≈ equal. Accepted trade-off: installs/git/pytest writes are slower; data reads fine. uv cache is on C: (default `%LOCALAPPDATA%`), so only venv materialization hits D:. No D: backup — GitHub is the sole git backup; D: reserved for write-once data archives. Revisit if WSL/git operations feel painful.
 - Deployment (Phase 6): HF Space via `marimo-team/marimo-app-template` fork; sleeps ~48 h → pre-computed fallback must render instantly; pin CVE-2026-39987-patched marimo; no upload/code-exec widgets.
 - Free-tier discipline: GitHub Actions + HF Space + Colab + EIA key + streaming HF datasets — nothing paid, ledger in `docs/setup-steps.md`.
