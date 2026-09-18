@@ -1,5 +1,11 @@
 # Project Knowledge
 
+## Session Handover (2026-09-18) — START HERE
+- **Done this session:** Phase 0 shipped (repo public + CI green: https://github.com/batestguy/dangote-refinery-optimizer) · Colab/WSL verification (`scripts/colab-wsl-test.sh`, all green; driver bug fixed: marimo single-definition rule) · streaming probes verified (CrudeOilMix nested `mix_json` schema; Electric Sheep = annual 1999–2025 per-grade pricing, synthetic-labeled cost anchor) · storage decision locked (stay on D:, benchmarks + rationale below).
+- **Next up (Phase 1, in order):** ① register EIA API key → `.env` (**user action, only blocker**) · ② implement `src/dangote_opt/data/acquire.py` (EIA client w/ parquet caching, assay parsers) · ③ write `mix_json` schema mapper for CrudeOilMix · ④ finalize 5-crude slate from public assays (spec §8 item 1).
+- **Also open:** verify driver on *real* Colab (optional — WSL test already covers the pattern); FCC correlation set choice is a Phase 2 kickoff decision (spec §8 item 2).
+- **Do not re-litigate:** marimo (not Streamlit), all-in on marimo notebooks, 5 crudes/4 products/single period, DE baselines incl. LP, dual CV, uv tooling, public repo, Colab optional-only, project stays on D:.
+
 ## What This Project Is
 ML surrogate model (Extremely Randomized Trees) + Differential Evolution optimization for **Dangote Refinery (650,000 bpd)** crude-blend and FCC-severity planning. Goal: maximize refinery margin (product value − crude cost) subject to blend/capacity/quality constraints.
 

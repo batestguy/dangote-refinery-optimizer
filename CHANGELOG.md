@@ -2,6 +2,27 @@
 
 All notable changes to this project. Format based on Keep a Changelog.
 
+## [Unreleased]
+
+### Fixed
+- Colab driver notebook: consolidate cell definitions to satisfy marimo's
+  single-definition rule (`MultipleDefinitionError` on `load_dataset`/`os`/
+  `subprocess`) — caught by WSL headless test.
+
+### Added
+- `scripts/colab-wsl-test.sh`: replicates the Colab free-tier workflow on
+  Linux/WSL (clone → venv → editable install → sanity → headless marimo →
+  pytest) using a standalone project-local uv; no sudo, no system changes.
+- Verified HF streaming probes (CrudeOilMix + Electric Sheep) from WSL;
+  schema findings recorded in `docs/data_provenance.md`.
+
+### Decided (documented)
+- Storage: project stays on `D:\Dangote` (external USB, benchmarked 2.6–8×
+  slower writes than C: SSD; reads equal; uv cache on C:). GitHub is the sole
+  git backup; D: reserved for write-once data archives. See `knowledge.md`.
+- Colab/Kaggle: optional convenience only (CPU-bound workloads run locally;
+  free GPU quotas are useless to ETR). Driver remains Colab-ready.
+
 ## [0.1.0] — 2026-09-18
 
 ### Added
