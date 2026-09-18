@@ -1,0 +1,33 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.marimo/
+
+# Data — raw/processed never committed (see docs/setup-steps.md step 8)
+data/raw/
+data/processed/
+*.parquet
+
+# Trained artifacts
+models/*.pkl
+models/*.joblib
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Agent tooling artifacts (not project code)
+.agents/
