@@ -191,6 +191,124 @@ def yields_from_assay(
     return np.clip(yields, 0.0, None)
 
 
+def light_naphtha_fractions(
+    curves: list[FloatArray] | tuple[FloatArray, ...] | None,
+) -> FloatArray:
+    """Per-crude light-naphtha fraction (<80 °C) of whole crude, shape (n,).
+
+    Precompute once per slate; ``blend_yields_batch`` consumes the vector so
+    the batch path never re-interpolates curves (hot-path hygiene).
+    """
+    if curves is None:
+        raise ValueError("curves required to compute light-naphtha fractions")
+    return np.array(
+        [
+            _interpolate_vol_pct(np.asarray(c, dtype=float), LIGHT_NAPHTHA_END_C) / 100.0
+            for c in curves
+        ]
+    )
+
+
+def blend_yields_batch(
+    apis: FloatArray,
+    sulfurs: FloatArray,
+    curves: list[FloatArray] | tuple[FloatArray, ...] | None = None,
+    per_crude_cuts: FloatArray | None = None,
+    light_naphtha: FloatArray | None = None,
+    ratios_batch: FloatArray | None = None,
+    severities: FloatArray | None = None,
+) -> FloatArray:
+    """Vectorized blend yields: (B, n_crudes) ratios × (B,) severities → (B, 4).
+
+    The blend mass balance is *exactly linear* in the blend's cut fractions,
+    with a single shared nonlinearity: the FCC conversion multiplies the
+    blended VGO fraction by a factor that depends only on severity.
+    ``blend_yields_batch`` reproduces ``yields_from_assay`` pooled per
+    blend exactly (pinned to machine precision by tests), while evaluating
+    an entire DE population in one pass — this is what keeps the deep
+    re-opt inside the 30–60 s budget (spec §3.7).
+
+    Args:
+        apis: whole-crude API gravities, shape (n_crudes,) — carried for
+            interface parity (the yield math is curve-driven).
+        sulfurs: whole-crude sulfur wt-%, shape (n_crudes,) — recorded only.
+        curves: one TBP curve per crude (same order), used when
+            ``per_crude_cuts`` is None.
+        per_crude_cuts: optional precomputed (n_crudes, 5) cut matrix from
+            ``tbp_cut_fractions`` (the hot path; avoids re-interpolating
+            every call). When given, also pass ``light_naphtha`` (or ``curves``
+            to derive it).
+        light_naphtha: optional precomputed per-crude light-naphtha fraction
+            (<80 °C of whole crude) from ``light_naphtha_fractions``.
+        ratios_batch: blend ratios, shape (B, n_crudes), rows sum ≈ 1.
+        severities: FCC severity proxy, shape (B,) or scalar.
+
+    Returns:
+        (B, 4) yields in (gasoline, diesel, jet, petrochem) order, fractions
+        of whole-crude feed, each ≥ 0, rows summing to ≈ 1.
+    """
+    if ratios_batch is None:
+        raise ValueError("ratios_batch is required")
+    X = np.asarray(ratios_batch, dtype=float)
+    if X.ndim != 2:
+        raise ValueError(f"ratios_batch must be (B, n_crudes), got {X.shape}")
+    if severities is None:
+        raise ValueError("severities is required")
+    s = np.asarray(severities, dtype=float)
+    if s.ndim == 0:
+        s = np.full(len(X), float(s))
+    if len(s) != len(X):
+        raise ValueError(f"severities length {len(s)} != ratios_batch rows {len(X)}")
+    if not np.all((s >= 0.0) & (s <= 1.0)):
+        raise ValueError("severity must be in [0, 1]")
+
+    if per_crude_cuts is None:
+        if curves is None:
+            raise ValueError("provide curves or per_crude_cuts")
+        per_crude_cuts = np.array([tbp_cut_fractions(np.asarray(c, dtype=float)) for c in curves])
+        light = light_naphtha_fractions(curves)
+    else:
+        if light_naphtha is not None:
+            light = np.asarray(light_naphtha, dtype=float)
+        elif curves is not None:
+            light = light_naphtha_fractions(curves)
+        else:
+            raise ValueError("per_crude_cuts requires light_naphtha or curves")
+    C = np.asarray(per_crude_cuts, dtype=float)
+    if C.shape != (X.shape[1], 5):
+        raise ValueError(f"per_crude_cuts must be (n_crudes, 5), got {C.shape}")
+    if light.shape != (X.shape[1],):
+        raise ValueError(f"light_naphtha must be (n_crudes,), got {light.shape}")
+
+    cuts = X @ C  # (B, 5): [naphtha, kero, diesel_cut, vgo, residue]
+    naphtha, kero, diesel_cut, vgo, residue = (cuts[:, k] for k in range(5))
+    light_nap = X @ light
+    mid_nap = naphtha - light_nap
+
+    # Same mass balance as yields_from_assay, vectorized over the batch.
+    conversion = FCC_CONVERSION_AT_S0 + s * (FCC_CONVERSION_AT_S1 - FCC_CONVERSION_AT_S0)
+    fcc_gasoline = vgo * (conversion * FCC_GASOLINE_SHARE)
+    fcc_lco = vgo * (conversion * FCC_LCO_SHARE)
+    fcc_gas_coke = vgo * (conversion * FCC_GAS_COKE_SHARE)
+    slurry = vgo * (1.0 - conversion)
+
+    butane_lpg = light_nap * BUTANE_PULL_SHARE
+    light_nap_net = light_nap * (1.0 - BUTANE_PULL_SHARE)
+    reformate = mid_nap * REFORMER_YIELD
+    reformer_lpg = mid_nap * (1.0 - REFORMER_YIELD)
+    alkylate = fcc_gas_coke * ALKYLATE_SHARE
+    fcc_gas_nonalk = fcc_gas_coke * (1.0 - ALKYLATE_SHARE)
+
+    gasoline = light_nap_net * ISOM_YIELD + reformate + fcc_gasoline + alkylate
+    jet = kero
+    diesel = diesel_cut + fcc_lco
+    petrochem = residue + slurry + fcc_gas_nonalk + reformer_lpg + butane_lpg
+
+    yields = np.column_stack([gasoline, diesel, jet, petrochem])
+    yields[:, 1] *= 1.0 - HYDROTREATER_YIELD_LOSS
+    return np.clip(yields, 0.0, None)
+
+
 def component_volumes(
     tbp_curve: FloatArray,
     severity: float,

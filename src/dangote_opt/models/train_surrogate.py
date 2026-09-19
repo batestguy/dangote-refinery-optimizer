@@ -133,8 +133,7 @@ def train_etr_surrogate(
     model = _make_etr(seed)
     model.fit(X_np, Y)
     train_r2 = {
-        t: float(r2_score(Y[t], model.predict(X_np)[:, k]))
-        for k, t in enumerate(LABEL_COLUMNS)
+        t: float(r2_score(Y[t], model.predict(X_np)[:, k])) for k, t in enumerate(LABEL_COLUMNS)
     }
 
     # Dual CV — both protocols, same fold count, both reported (spec §3.5)
@@ -214,9 +213,7 @@ def write_model_card(bundle: dict, path: str | Path = "models/model_card.md") ->
     card = bundle["card"]
 
     def _fmt(scores: dict[str, dict[str, float]]) -> str:
-        return "\n".join(
-            f"| {t} | {m['r2']:.4f} | {m['mae']:.5f} |" for t, m in scores.items()
-        )
+        return "\n".join(f"| {t} | {m['r2']:.4f} | {m['mae']:.5f} |" for t, m in scores.items())
 
     lines = [
         "# Model Card — ETR Yield Surrogate (Phase 3)",
@@ -256,10 +253,7 @@ def write_model_card(bundle: dict, path: str | Path = "models/model_card.md") ->
         "## Permutation importance (ΔR², 10 repeats)",
         "\n".join(
             f"- **{t}:** "
-            + ", ".join(
-                f"{f} ({v:.3f})"
-                for f, v in sorted(imp.items(), key=lambda kv: -kv[1])[:3]
-            )
+            + ", ".join(f"{f} ({v:.3f})" for f, v in sorted(imp.items(), key=lambda kv: -kv[1])[:3])
             for t, imp in card["importances"].items()
         ),
         "",
@@ -320,3 +314,20 @@ class SurrogateYieldModel:
         # DE evaluates this ~20k times per run.
         feats = np.array([[api, sulfur, sev, *cuts]], dtype=float)
         return self.model.predict(feats)[0]
+
+    def batch(self, ratios_batch: FloatArray, severities: FloatArray) -> FloatArray:
+        """Vectorized mirror of ``__call__``: (B, n) ratios × (B,) s → (B, 4).
+
+        One feature matrix + one ``model.predict`` per DE population — the
+        hot path for vectorized DE (objective ``batch_yields`` slot).
+        """
+        X = np.asarray(ratios_batch, dtype=float)
+        s = np.asarray(severities, dtype=float)
+        if s.ndim == 0:
+            s = np.full(len(X), float(s))
+        api = X @ self.apis
+        sulfur = X @ self.sulfurs
+        cuts = X @ self.cut_fractions
+        sev = np.clip(s, *self.severity_range)
+        feats = np.column_stack([api, sulfur, sev, cuts])
+        return self.model.predict(feats)

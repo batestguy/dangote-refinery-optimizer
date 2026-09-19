@@ -154,6 +154,36 @@ sheets. Pinned in `tests/test_bridge.py`.
 4. **Jet pool has no severity response** (kero is straight-run only); some
    refineries crack into the kero range at low severity.
 
+## 6a. Optimization structure (Phase 4) — why the LP is exact and DE is fast
+
+**Linearity fact.** Every bridge stream is affine in severity for a fixed
+blend: `stream(x, s) = x·A + s·x·B` with per-crude constants A (s=0 value)
+and B (slope), because FCC conversion is linear in s and all other mass-balance
+steps are fixed fractions of cut volumes (themselves linear in x). The blend
+margin is therefore affine in the decision variables.
+
+**Consequences (implemented in Phase 4):**
+
+1. **The LP baseline is exact, not an approximation** (`optimization/baselines.py`):
+   substituting `u_j = s·x_j` linearizes the model over 10 variables with
+   `0 ≤ u_j ≤ x_j`, `Σx = 1`. The quality specs enter as *hard* linear
+   constraints (RON and RVP-index are ratios of linear aggregations —
+   cross-multiplied; cetane and freeze linear), built from the same
+   `BatchQualityModel` coefficients as the DE penalty — one source of truth,
+   no drift between the soft (DE) and hard (LP) formulations.
+2. **Batch evaluation is exact** (`bridge.blend_yields_batch`,
+   `quality.BatchQualityModel`): the entire DE population is evaluated in one
+   vectorized pass, row-wise equal to the scalar paths (pinned to machine
+   precision in `tests/test_phase4.py`). scipy DE runs `vectorized=True` over
+   `objective.batch_call` — **sub-second per run on the bridge, ≈3 s through
+   the ETR** — versus ~127 s scalar in the Phase 3 wiring; the 30–60 s app
+   budget (spec §3.7) now has ~20× headroom.
+3. **DE ≡ LP on this physics** (verified): the optimum DE found matches the
+   LP to <0.5¢/bbl. The honest bar (problem statement §4) is met exactly —
+   and the mechanism is the linearity fact above. Any future model that makes
+   DE beat the LP (nonlinear blending, crude-specific FCC splits) will show
+   it through this same comparison.
+
 ## 7. Surrogate (Phase 3) — ETR over bridge-generated labels
 
 Implemented in `models/dataset.py` + `models/train_surrogate.py`; numbers below

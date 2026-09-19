@@ -19,9 +19,8 @@ app = marimo.App(width="medium")
 def _():
     import marimo as mo
     import numpy as np
-    from scipy.optimize import differential_evolution
 
-    return differential_evolution, mo, np
+    return mo, np
 
 
 @app.cell
@@ -36,14 +35,26 @@ def _(np):
     from dangote_opt.data.assays import frame_to_records
     from dangote_opt.data.costs import build_crude_costs, load_brent_reference
     from dangote_opt.data.prices import product_prices, usgc_prices_frame
-    from dangote_opt.features.bridge import tbp_cut_fractions, yields_from_assay
-    from dangote_opt.features.quality import CRUDE_QUALITIES, blend_pool_qualities
+    from dangote_opt.features.bridge import (
+        blend_yields_batch,
+        light_naphtha_fractions,
+        tbp_cut_fractions,
+        yields_from_assay,
+    )
+    from dangote_opt.features.quality import (
+        CRUDE_QUALITIES,
+        BatchQualityModel,
+        blend_pool_qualities,
+    )
     from dangote_opt.optimization.objective import RefineryObjective, simplex_repair
 
     # REAL slate — parsed published assays (docs/data_provenance.md row 3).
     df = pd.read_parquet("data/derived/slate_phase1.parquet")
     records = frame_to_records(df)
     CRUDES = [r.name for r in records]
+    CURVES = [np.array(r.tbp_curve, dtype=float) for r in records]
+    CRUDE_CUTS = np.array([tbp_cut_fractions(c) for c in CURVES])
+    LIGHT_NAP = light_naphtha_fractions(CURVES)
 
     # REAL cost anchor — EIA Brent trailing-12m average + documented per-grade
     # differentials (docs/data_provenance.md row 9; differentials are ASSUMED).
@@ -73,21 +84,31 @@ def _(np):
 
     # REAL quality model — pool qualities from the bridge's component streams
     # (features/quality.py); RON/RVP/freeze/cetane specs join the penalty block.
-    curves = [np.array(r.tbp_curve, dtype=float) for r in records]
     crude_quals = [CRUDE_QUALITIES[r.crude_id] for r in records]
 
     def quality_model(ratios, severity):
-        return blend_pool_qualities(ratios, curves, crude_quals, severity)
+        return blend_pool_qualities(ratios, CURVES, crude_quals, severity)
 
     def bridge_yields(ratios, severity):
         """Blend yield = crude-weighted mean of per-crude bridge yields."""
         ys = np.array(
             [
-                yields_from_assay(r.api, r.sulfur_pct, np.array(r.tbp_curve), severity)
-                for r in records
+                yields_from_assay(r.api, r.sulfur_pct, c, severity)
+                for r, c in zip(records, CURVES, strict=True)
             ]
         )
         return ratios @ ys
+
+    def batch_bridge_yields(X, s):
+        """Exact-linear batch path — same mass balance, one vectorized pass."""
+        return blend_yields_batch(
+            np.array([r.api for r in records]),
+            np.array([r.sulfur_pct for r in records]),
+            per_crude_cuts=CRUDE_CUTS,
+            light_naphtha=LIGHT_NAP,
+            ratios_batch=X,
+            severities=s,
+        )
 
     # Phase 3 surrogate when trained (scripts/train_surrogate.py) — it learns
     # the bridge and reproduces it to <0.1% inside the envelope (model card).
@@ -102,12 +123,14 @@ def _(np):
             bundle["model"],
             np.array([r.api for r in records]),
             np.array([r.sulfur_pct for r in records]),
-            np.array([tbp_cut_fractions(np.array(r.tbp_curve, dtype=float)) for r in records]),
+            CRUDE_CUTS,
             severity_range=tuple(bundle["card"]["severity_training_range"]),
         )
+        BATCH_YIELDS = YIELD_MODEL.batch
         SURROGATE_INFO = bundle["card"]
     else:
         YIELD_MODEL = bridge_yields
+        BATCH_YIELDS = batch_bridge_yields
         SURROGATE_INFO = None
 
     objective = RefineryObjective(
@@ -117,6 +140,8 @@ def _(np):
         product_prices=PRICE_VEC,
         yield_model=YIELD_MODEL,
         quality_model=quality_model,
+        batch_yields=BATCH_YIELDS,
+        batch_quality=BatchQualityModel.from_slate(CURVES, crude_quals),
     )
     return (
         CONFIG,
@@ -148,12 +173,10 @@ def _(
     CRUDES,
     SURROGATE_INFO,
     baseline_severity,
-    differential_evolution,
     mo,
     np,
     objective,
     run,
-    simplex_repair,
 ):
     # marimo renders only the last *top-level* expression of a cell — an output
     # nested inside `if run.value:` is silently dropped. mo.stop() short-circuits
@@ -163,27 +186,25 @@ def _(
         mo.md("Set the baseline severity, then hit **Run** to optimize the blend."),
     )
 
-    bounds = [(0.0, 1.0)] * CONFIG.n_crudes + [CONFIG.severity_bounds]
-    result = differential_evolution(
-        objective,
-        bounds,
-        maxiter=CONFIG.de_maxiter,
-        popsize=CONFIG.de_popsize,
-        seed=CONFIG.de_seed_baseline,
-        polish=False,
-        tol=1e-3,
-    )
-    x = simplex_repair(result.x[: CONFIG.n_crudes])
-    sev = float(np.clip(result.x[-1], *CONFIG.severity_bounds))
-    # Report the *unpenalized* margin; feasibility is shown separately below.
-    margin_de = objective.margin(x, sev)
+    # Phase 4 driver: vectorized DE over the exact batch paths + the mandatory
+    # 3-way baseline table (equal-weight / random search / LP — spec §3.4).
+    from dangote_opt.optimization.de_driver import DE_BUDGET_S
+    from dangote_opt.optimization.de_driver import optimize_blend as run_opt
+
+    result = run_opt(objective)
+    x, sev, margin_de = result.best_x, result.best_severity, result.best_margin
     x_eq = np.full(CONFIG.n_crudes, 1 / CONFIG.n_crudes)
     margin_eq = objective.margin(x_eq, baseline_severity.value)
     uplift = (margin_de - margin_eq) / abs(margin_eq) if margin_eq else float("nan")
 
     rows = "\n".join(f"| {name} | {xi:.1%} |" for name, xi in zip(CRUDES, x, strict=True))
-    violations = objective.constraints_violated(x, sev)
+    violations = result.violations
     status = "✅ feasible" if not violations else f"⚠️ {violations}"
+
+    def _b(key):
+        b = result.baselines.get(key)
+        return f"${b.margin:,.2f}" if b else "—"
+
     if SURROGATE_INFO is not None:
         min_r2 = min(m["r2"] for m in SURROGATE_INFO["cv_random_5fold"].values())
         model_note = (
@@ -196,6 +217,11 @@ def _(
             "**Yield model:** Stage-1 TBP bridge directly "
             "(train the surrogate with `scripts/train_surrogate.py`)."
         )
+    budget_note = (
+        f"{result.runtime_s:.1f}s run — inside the {DE_BUDGET_S:.0f}s budget"
+        if not result.over_budget
+        else f"⚠️ {result.runtime_s:.1f}s — OVER the {DE_BUDGET_S:.0f}s budget"
+    )
     mo.md(
         f"""
         ### Optimal crude diet (bridge yields · Brent costs · USGC prices · quality specs)
@@ -204,12 +230,18 @@ def _(
         {rows}
 
         **FCC severity (DE):** {sev:.2f} · **Blend margin (DE):** ${margin_de:,.2f}/bbl
-        · **Equal-weight baseline** (severity {baseline_severity.value:.2f}):
-        ${margin_eq:,.2f}/bbl
-        · **Uplift:** {uplift:+.1%}
+        · **Uplift vs equal-weight** (severity {baseline_severity.value:.2f}):
+        {uplift:+.1%}
         · **Constraints:** {status}
 
-        {model_note}
+        | Baseline (spec §3.4) | Margin ($/bbl) |
+        |---|---|
+        | DE optimum | {margin_de:,.2f} |
+        | LP optimum (honest bar) | {_b("lp")} |
+        | Random search (10k feasible draws) | {_b("random_search")} |
+        | Equal-weight | {_b("equal_weight")} |
+
+        {model_note} · **Runtime:** {budget_note}.
         """
     )
     return

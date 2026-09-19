@@ -5,6 +5,23 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Phase 4 optimization driver + baseline contract** (`optimization/de_driver.py`,
+  `optimization/baselines.py`, `viz/convergence.py`, `scripts/sensitivity_study.py`):
+  vectorized DE (scipy `vectorized=True` over exact batch paths) with
+  convergence capture, Sobol init, runtime/budget flag; the mandatory 3-way
+  baseline table — equal-weight, random search (10k feasible draws, batched),
+  and an **exact LP** over the bridge's affine-in-severity physics (substitution
+  `u_j = s·x_j`; quality specs as hard linear constraints from the same
+  `BatchQualityModel` coefficients as the DE penalty). Key structural finding:
+  **DE matches the exact LP to <0.5¢/bbl** — the bridge physics are linear in
+  the decision variables, so the honest bar (problem statement §4) is met
+  exactly, mechanism explained in methodology §6a. **Performance: DE run
+  0.85 s on the bridge / ~3.4 s through the ETR (was ~127 s scalar)** —
+  ~20× headroom inside the 30–60 s app budget (spec §3.7). 100-seed
+  sensitivity sweep committed (`data/derived/sensitivity_phase4.json`, mean
+  $15.84 ± 0.00, uplift vs equal-weight +11.3%) with figures in `docs/assets/`.
+  Batch-path exactness (bridge, quality mirror, objective) pinned to machine
+  precision in `tests/test_phase4.py`; 121 tests.
 - **Phase 3 ETR surrogate** (`models/dataset.py`, `models/train_surrogate.py`,
   `scripts/train_surrogate.py`): Extremely Randomized Trees trained on
   bridge-generated labels (4,000 Dirichlet-sampled blends × severity, seed

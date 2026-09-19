@@ -43,7 +43,9 @@ Constraint handling in DE (implemented in `src/dangote_opt/optimization/objectiv
 The optimizer's margin is **always** reported alongside, on identical prices/constraints:
 1. **Equal-weight** blend at *default* severity (the planner's no-optimization case; spec §3.4),
 2. **Random search** (10k feasible draws),
-3. **LP optimum** on the linearized model.
+3. **LP optimum** — *exact* over the bridge physics: every stream is affine in severity (`stream(x, s) = x·A + s·x·B`), so substituting `u_j = s·x_j` linearizes the model without approximation; quality specs enter as hard linear constraints built from the same coefficients as the DE penalty (one source of truth).
+
+Implemented in `optimization/de_driver.py` + `optimization/baselines.py` (Phase 4). DE runs vectorized over the exact batch paths — sub-second on the bridge, ~3 s through the surrogate — inside the 30–60 s app budget (spec §3.7).
 
 If DE ≤ LP, that is reported honestly and analyzed (nonlinearity may be small at 5 crudes — itself a finding).
 

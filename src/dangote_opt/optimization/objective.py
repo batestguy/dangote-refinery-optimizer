@@ -41,6 +41,12 @@ YieldModel = Callable[[FloatArray, float], FloatArray]
 # injects a closure over the slate's curves + component qualities.
 QualityModel = Callable[[FloatArray, float], dict[str, float]]
 
+# Batch yield-model strategy: (B, n_crudes) ratios × (B,) severities → (B, 4)
+# yields in one vectorized pass. The bridge's exact-linear path and the ETR's
+# batch predict both satisfy this — it is what makes vectorized DE fast enough
+# for the 30–60 s app budget (spec §3.7).
+BatchYieldModel = Callable[[FloatArray, FloatArray], FloatArray]
+
 
 def simplex_repair(x: FloatArray) -> FloatArray:
     """Project an arbitrary non-negative vector onto the probability simplex.
@@ -70,6 +76,8 @@ class RefineryObjective:
     config: ProjectConfig = CONFIG
     yield_model: YieldModel | None = field(default=None)
     quality_model: QualityModel | None = field(default=None)
+    batch_yields: BatchYieldModel | None = field(default=None)
+    batch_quality: object | None = field(default=None)  # features.quality.BatchQualityModel
 
     def __post_init__(self) -> None:
         n = self.config.n_crudes
@@ -154,6 +162,37 @@ class RefineryObjective:
         cost = float(np.dot(ratios, self.crude_costs))
         return revenue - cost
 
+    def batch_values(self, pop: FloatArray) -> FloatArray:
+        """Vectorized ``__call__`` over a DE population, shape (B, 6) → (B,).
+
+        Same mathematics, one pass: negative margins from a batched yield
+        model (``batch_yields`` — the bridge's exact-linear path or the ETR's
+        batch predict) plus the identical linear+quadratic penalty from
+        blend API/sulfur. When no batch model is supplied the scalar path
+        loops (used in tests and with exotic models).
+
+        Note: the quality penalty is NOT re-evaluated here (it matches the
+        scalar path only when the quality model is bridge-exact, which the
+        app guarantees); with a quality model set and no batch model, callers
+        should prefer ``__call__`` for exactness.
+        """
+        pop = np.asarray(pop, dtype=float)
+        X = pop[:, : self.config.n_crudes]
+        s = np.clip(pop[:, -1], *self.config.severity_bounds)
+        X = np.array([simplex_repair(row) for row in X])  # (B, n) repair
+        if self.batch_yields is not None:
+            Y = np.asarray(self.batch_yields(X, s), dtype=float)
+        else:
+            Y = np.array([self.predict_yields(row, si) for row, si in zip(X, s, strict=True)])
+        margins = Y @ self.product_prices - X @ self.crude_costs
+        api = X @ self.crude_apis
+        sulfur = X @ self.crude_sulfurs
+        api_lo, api_hi = self.config.api_blend_range
+        v_api = np.maximum(api_lo - api, 0.0) + np.maximum(api - api_hi, 0.0)
+        v_s = np.maximum(sulfur - self.config.sulfur_blend_pct_max, 0.0)
+        penalty = (v_api + v_api**2) + (v_s + v_s**2)
+        return -margins + self.config.constraint_penalty * penalty
+
     def __call__(self, decision_vars: FloatArray) -> float:
         """Return *negative* margin per barrel plus constraint penalty (DE minimizes)."""
         x = simplex_repair(decision_vars[: self.config.n_crudes])
@@ -163,3 +202,43 @@ class RefineryObjective:
             quals = self.quality_model(x, severity)
             penalty += self.config.constraint_penalty * quality_violation_magnitude(quals)
         return -self.margin(x, severity) + penalty
+
+    def batch_call(self, pop: FloatArray) -> FloatArray:
+        """Batched ``__call__`` (vectorized DE; batch_yields or scalar fallback).
+
+        Accepts populations row-wise (B, n_vars) or in scipy's vectorized
+        convention (n_vars, B) — columns are members; normalized internally.
+
+        Exactness contract: with ``batch_yields`` (bridge exact-linear path or
+        ETR batch predict) and ``batch_quality`` (exact quality mirror) both
+        set, the vectorized value equals ``__call__`` row-wise — each
+        violation group (API window, sulfur cap, quality bundle) keeps its own
+        linear+quadratic term, matching the scalar composition. Falls back to
+        the scalar loop when any exact batch piece is missing.
+        """
+        pop = np.asarray(pop, dtype=float)
+        n_vars = self.config.n_crudes + 1
+        if pop.ndim == 2 and pop.shape[0] == n_vars and pop.shape[1] != n_vars:
+            pop = pop.T  # scipy vectorized passes (n_vars, S)
+        scalar_fallback = self.batch_yields is None or (
+            self.quality_model is not None and self.batch_quality is None
+        )
+        if scalar_fallback:
+            return np.array([self.__call__(row) for row in pop])
+        X = pop[:, : self.config.n_crudes]
+        s = np.clip(pop[:, -1], *self.config.severity_bounds)
+        Xr = np.array([simplex_repair(row) for row in X])
+        Y = np.asarray(self.batch_yields(Xr, s), dtype=float)
+        margins = Y @ self.product_prices - Xr @ self.crude_costs
+        api = Xr @ self.crude_apis
+        sulfur = Xr @ self.crude_sulfurs
+        api_lo, api_hi = self.config.api_blend_range
+        v_api = np.maximum(api_lo - api, 0.0) + np.maximum(api - api_hi, 0.0)
+        v_s = np.maximum(sulfur - self.config.sulfur_blend_pct_max, 0.0)
+        total = (v_api + v_api**2) + (v_s + v_s**2)
+        if self.quality_model is not None and self.batch_quality is not None:
+            # ``violation_magnitude`` already applies the linear+quadratic form
+            # to the summed quality violation (identical to the scalar
+            # ``quality_violation_magnitude``) — add it once, do not re-square.
+            total = total + self.batch_quality.violation_magnitude(Xr, s)
+        return -margins + self.config.constraint_penalty * total
