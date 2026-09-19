@@ -205,9 +205,7 @@ def fetch_eia_series(
         raise ValueError(f"length {length} exceeds API cap {PAGE_LENGTH_MAX}")
 
     cols = tuple(data_columns) if data_columns else series.data_columns
-    merged_facets: dict[str, tuple[str, ...]] = {
-        k: tuple(v) for k, v in series.facets.items()
-    }
+    merged_facets: dict[str, tuple[str, ...]] = {k: tuple(v) for k, v in series.facets.items()}
     for k, v in (facets or {}).items():
         merged_facets[k] = tuple(v)
 

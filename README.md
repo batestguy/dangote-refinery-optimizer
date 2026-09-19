@@ -12,9 +12,9 @@ ML surrogate (Extremely Randomized Trees) + differential evolution to optimize t
 |---|---|
 | Blend math + margin objective + constraints | ✅ implemented & tested |
 | DE optimization driver + baselines (equal-weight / random / LP) | 🔜 Phase 4 |
-| Assay→yield bridge (TBP cut-points + published FCC correlations) | 🔜 Phase 2 |
+| Assay→yield bridge — Stage 1: TBP cut-points + cited FCC ranges, ground-truthed vs published cut yields | ✅ implemented (`docs/methodology.md`) |
 | ETR surrogate, dual-CV validation (random + leave-crude-out) | 🔜 Phase 3 |
-| App (marimo, deploys to HF Spaces) | ✅ POC with placeholder yield model |
+| App (marimo, deploys to HF Spaces) | ✅ POC on real assay slate + Stage-1 bridge yields (costs placeholder) |
 | Prices | placeholder constants → EIA-anchored in Phase 1 |
 
 All synthetic/illustrative inputs are marked `*` in the app and disclosed in [`docs/data_provenance.md`](docs/data_provenance.md).

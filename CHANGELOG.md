@@ -5,6 +5,23 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Phase 2 Stage-1 bridge (`features/bridge.py`): TBP cut-point integration
+  (interpolated, basis-uniform vol% curves) + severity-dependent FCC
+  conversion (40→80% of VGO, cited Gary & Handwerk ranges) with documented
+  product splits; hydrotreater ≈1% yield loss (ICCT exhibit 17); 4-product
+  pooling. Ground-truthed: parsed-curve cuts reproduce published Bonny Light
+  cut yields to ±0.2 vol%; gas-in-curve simplification quantified (≈2 vol%).
+- `docs/methodology.md` — every bridge constant cited (spec §5 Phase 2
+  deliverable); Maples correlations reviewed and rejected for
+  traceability (documented in §6.1).
+- TE assay parser upgraded: curves now stored on the vol% column (uniform
+  basis across the slate) — artifact rebuilt.
+- `RefineryObjective` accepts an injectable `yield_model` (the exact signature
+  the Phase 3 ETR will use); app upgraded from mock slate to the real
+  published assays with bridge yields (costs still placeholder until row 9).
+- 11 new tests (73 total).
+
+### Fixed
 - Phase 1 data layer: EIA Open Data v2 client (`data/acquire.py`) with
   cache-first parquet + provenance sidecars (key never persisted), page
   pagination with a hard stop, injectable transport for offline tests, and a

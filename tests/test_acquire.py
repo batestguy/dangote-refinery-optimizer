@@ -73,15 +73,17 @@ def row(period: str, value: str) -> dict[str, Any]:
 def test_paginates_and_coerces_string_values(tmp_path):
     pages = [[row("2024-01", "2.50"), row("2024-02", "2.60")], [row("2024-03", "2.70")]]
     transport = make_transport(pages, total=3)
-    df = fetch_eia_series(SERIES, "KEY", start="2024-01", end="2024-03",
-                          cache_dir=tmp_path, transport=transport)
+    df = fetch_eia_series(
+        SERIES, "KEY", start="2024-01", end="2024-03", cache_dir=tmp_path, transport=transport
+    )
     assert len(df) == 3
     assert df["value"].dtype == "float64"
     assert df["value"].tolist() == [2.50, 2.60, 2.70]
     assert list(df["period"]) == ["2024-01", "2024-02", "2024-03"]
     assert df["duoarea"].tolist() == ["R1"] * 3  # echoed facet column survives
-    df = fetch_eia_series(SERIES, "KEY", start="2024-01", end="2024-03",
-                          cache_dir=tmp_path, transport=transport)
+    df = fetch_eia_series(
+        SERIES, "KEY", start="2024-01", end="2024-03", cache_dir=tmp_path, transport=transport
+    )
     assert len(df) == 3
     assert df["value"].dtype == "float64"
     assert df["value"].tolist() == [2.50, 2.60, 2.70]
@@ -92,9 +94,11 @@ def test_cache_hit_skips_network(tmp_path):
     pages = [[row("2024-01", "2.50")]]
     transport = make_transport(pages)
     df1 = fetch_eia_series(SERIES, "KEY", cache_dir=tmp_path, transport=transport)
+
     # second call with a transport that would fail if called
     def broken(*a: Any, **k: Any) -> FakeResponse:
         raise AssertionError("network hit on cache path")
+
     df2 = fetch_eia_series(SERIES, "KEY", cache_dir=tmp_path, transport=broken)
     pd.testing.assert_frame_equal(df1, df2)
 
@@ -159,9 +163,7 @@ def test_length_over_cap_raises():
 
 def test_pagination_exhaustion_raises(tmp_path):
     # total=7 but every page repeats the same 2 rows -> never catches up
-    transport = make_transport(
-        [[row("2024-01", "2.50"), row("2024-02", "2.60")]], total=7
-    )
+    transport = make_transport([[row("2024-01", "2.50"), row("2024-02", "2.60")]], total=7)
     with pytest.raises(EiaApiError, match="pagination exhausted"):
         fetch_eia_series(SERIES, "KEY", cache_dir=tmp_path, transport=transport, max_pages=3)
 
@@ -177,8 +179,9 @@ def test_facet_encoding():
 def test_facets_reach_request_url(tmp_path):
     capture: list[dict] = []
     transport = make_transport([[row("2024-01", "2.50")]], capture=capture)
-    fetch_eia_series(SERIES, "KEY", cache_dir=tmp_path, transport=transport,
-                     facets={"product": ("GAS",)})
+    fetch_eia_series(
+        SERIES, "KEY", cache_dir=tmp_path, transport=transport, facets={"product": ("GAS",)}
+    )
     sent = capture[0]["params"]
     assert sent["facets[duoarea][]"] == ["R1"]
     assert sent["facets[product][]"] == ["GAS"]

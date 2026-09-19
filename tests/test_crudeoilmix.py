@@ -34,8 +34,14 @@ class FakeHFDataset:
 def fake_datasets(monkeypatch: pytest.MonkeyPatch):
     """Patch the lazy `from datasets import load_dataset` inside the module."""
     rows = [
-        mixrow("A1", {"whole_crude_api": 33.4, "whole_crude_sulfur_wt_pct": 0.16,
-                      "whole_crude_tbp_curve": [[20, 0], [180, 30], [360, 60], [540, 85]]}),
+        mixrow(
+            "A1",
+            {
+                "whole_crude_api": 33.4,
+                "whole_crude_sulfur_wt_pct": 0.16,
+                "whole_crude_tbp_curve": [[20, 0], [180, 30], [360, 60], [540, 85]],
+            },
+        ),
         mixrow("A2", {"api": 31.7, "sulfur": 1.30}),  # shorter suffix variants
         mixrow("B1", {"whole_crude_api": 40.0}, n_components=3),  # blend -> filtered out
         mixrow("BAD", {"nonsense_key": 1}),  # maps to nothing -> reject on strict use
@@ -120,8 +126,13 @@ def test_stream_whole_crudes_no_limit(fake_datasets):
 def test_mapped_rows_feed_assay_validation():
     """Mapped properties must be AssayRecord-compatible shapes (tuple TBP)."""
     mapped = com.map_mix_row(
-        mixrow("A1", {"whole_crude_api": 33.4,
-                      "whole_crude_tbp_curve": [[20, 0], [180, 30], [360, 60], [540, 85]]})
+        mixrow(
+            "A1",
+            {
+                "whole_crude_api": 33.4,
+                "whole_crude_tbp_curve": [[20, 0], [180, 30], [360, 60], [540, 85]],
+            },
+        )
     )
     tbp = mapped.properties["tbp_curve"]
     assert isinstance(tbp, list) and len(tbp[0]) == 2
@@ -130,8 +141,9 @@ def test_mapped_rows_feed_assay_validation():
 
 
 def test_load_mix_json_parquet_validates_columns(tmp_path):
-    df = pd.DataFrame({"oilid": ["A"], "n_components": [1], "is_blend": [False],
-                       "mix_json": ['{"api": 30}']})
+    df = pd.DataFrame(
+        {"oilid": ["A"], "n_components": [1], "is_blend": [False], "mix_json": ['{"api": 30}']}
+    )
     p = tmp_path / "mix.parquet"
     df.to_parquet(p, index=False)
     out = com.load_mix_json_parquet(str(p))

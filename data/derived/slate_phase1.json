@@ -8,14 +8,14 @@
       "source": "TotalEnergies crude oil data sheet",
       "url": "https://trading.totalenergies.com/wp-content/uploads/2025/11/BONNY-LIGHT.pdf",
       "pulled": "2026-09-19",
-      "notes": "assay date 18-Jun-20; TBP yield basis: wt%"
+      "notes": "assay date 18-Jun-20; TBP yield basis: vol%"
     },
     {
       "crude_id": "forcados",
       "source": "TotalEnergies crude oil data sheet",
       "url": "https://trading.totalenergies.com/wp-content/uploads/2025/11/FORCADOS.pdf",
       "pulled": "2026-09-19",
-      "notes": "assay date 01-Mar-14; TBP yield basis: wt%"
+      "notes": "assay date 01-Mar-14; TBP yield basis: vol%"
     },
     {
       "crude_id": "qua_iboe",

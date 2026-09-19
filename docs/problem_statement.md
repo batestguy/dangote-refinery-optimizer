@@ -35,7 +35,7 @@ Constraint handling in DE (implemented in `src/dangote_opt/optimization/objectiv
 ## 3. Yield model
 
 `yieldᵢ(x, s)` is produced by a two-stage bridge (spec §3.1):
-1. **Stage 1 (Phase 2):** TBP cut-point mass balance + published FCC/HDS/reformer correlations → per-crude yield vectors (every correlation cited in `docs/methodology.md`).
+1. **Stage 1 (Phase 2 — implemented):** TBP cut-point mass balance + cited FCC conversion/product-split ranges → per-crude yield vectors; every constant documented in `docs/methodology.md` and validated against published Bonny Light cut yields (±0.2 vol%).
 2. **Stage 2 (Phase 3):** ETR surrogate learns yield response over (blend-weighted properties, severity), calibrated in shape against FCCU operational data. Validated with **dual CV**: random 5-fold (headline) **and** leave-crude-out GroupKFold (honesty metric) — both reported, never one alone.
 
 Until Phase 3, a documented *blend-aware* placeholder keeps the optimizer and app testable: lighter blends yield more gasoline/distillate and less residue, sulfur costs a little distillate, severity converts VGO into gasoline. Magnitudes are illustrative; only the directions are asserted in tests.

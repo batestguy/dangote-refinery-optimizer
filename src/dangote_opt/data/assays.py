@@ -54,9 +54,7 @@ class AssayRecord:
         if not self.crude_id or not self.name:
             raise AssayValidationError("crude_id and name must be non-empty")
         if not (API_RANGE[0] <= self.api <= API_RANGE[1]):
-            raise AssayValidationError(
-                f"{self.crude_id}: API {self.api} outside {API_RANGE}"
-            )
+            raise AssayValidationError(f"{self.crude_id}: API {self.api} outside {API_RANGE}")
         if not (SULFUR_RANGE[0] <= self.sulfur_pct <= SULFUR_RANGE[1]):
             raise AssayValidationError(
                 f"{self.crude_id}: sulfur {self.sulfur_pct} wt-% outside {SULFUR_RANGE}"

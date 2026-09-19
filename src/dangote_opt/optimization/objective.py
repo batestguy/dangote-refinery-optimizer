@@ -18,7 +18,8 @@ alongside equal-weight, random-search, and LP optima on the same price vector.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 
 import numpy as np
 from numpy.typing import NDArray
@@ -27,6 +28,10 @@ from dangote_opt.config import CONFIG, ProjectConfig
 from dangote_opt.features.blend import blend_api, blend_sulfur
 
 FloatArray = NDArray[np.float64]
+
+# Yield-model strategy: (blend_ratios, severity) -> 4 yields. The Phase 3 ETR
+# surrogate plugs in behind this exact signature (spec §3.6).
+YieldModel = Callable[[FloatArray, float], FloatArray]
 
 
 def simplex_repair(x: FloatArray) -> FloatArray:
@@ -55,6 +60,7 @@ class RefineryObjective:
     crude_costs: FloatArray
     product_prices: FloatArray
     config: ProjectConfig = CONFIG
+    yield_model: YieldModel | None = field(default=None)
 
     def __post_init__(self) -> None:
         n = self.config.n_crudes
@@ -72,19 +78,18 @@ class RefineryObjective:
                 f"product_prices must have length {n_products}, got {len(self.product_prices)}"
             )
 
-    # -- placeholder yield model (replaced by ETR surrogate in Phase 3) --------
+    # -- yield model (Phase 3: ETR surrogate behind the same signature) --------
     def predict_yields(self, ratios: FloatArray, severity: float) -> FloatArray:
-        """Placeholder yields for (gasoline, diesel, jet, petrochem), fractions of feed.
+        """Yields for (gasoline, diesel, jet, petrochem), fractions of feed.
 
-        Deliberately simple but *blend-aware*, so the optimizer has a real trade-off
-        (cheap sour/heavy crude vs. higher light-product yield) instead of trivially
-        buying the cheapest barrel. Directionally consistent with refining basics:
-          * lighter blend (higher API) → more naphtha/gasoline & distillate, less residue
-          * higher sulfur → small distillate loss to hydrotreating/HDS
-          * FCC severity → converts VGO/residue into gasoline at the expense of the rest
-        Yields sum to < 1; the remainder is fuel oil / loss (not a priced product).
-        Magnitudes are illustrative only. Contract for Phase 3: same signature, ETR behind it.
+        With ``yield_model`` set (e.g. the Stage-1 TBP bridge or, later, the ETR
+        surrogate), evaluation is delegated to it. Otherwise a documented
+        blend-aware placeholder runs: lighter blend (higher API) → more light
+        products; sulfur → small distillate loss; severity → VGO→gasoline.
+        Placeholder magnitudes are illustrative only.
         """
+        if self.yield_model is not None:
+            return np.clip(np.asarray(self.yield_model(ratios, severity), dtype=float), 0.0, None)
         api_lo, api_hi = self.config.api_blend_range
         api, sulfur = self.blend_properties(ratios)
         light = float(np.clip((api - api_lo) / (api_hi - api_lo), 0.0, 1.0))  # 0 = heavy, 1 = light

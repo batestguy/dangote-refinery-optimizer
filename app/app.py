@@ -24,16 +24,37 @@ def _():
 
 @app.cell
 def _(np):
+    import pandas as pd
+
     from dangote_opt.config import CONFIG
+    from dangote_opt.data.assays import frame_to_records
+    from dangote_opt.features.bridge import yields_from_assay
     from dangote_opt.optimization.objective import RefineryObjective, simplex_repair
 
-    # Mock slate — replaced by real parsed assays in Phase 1 (docs/data_provenance.md)
-    CRUDES = ["Bonny Light*", "Forcados*", "Qua Iboe*", "Arab Light*", "Urals*"]
+    # REAL slate — parsed published assays (docs/data_provenance.md row 3);
+    # costs are still placeholder until the Phase 2 cost anchor (row 9) lands.
+    df = pd.read_parquet("data/derived/slate_phase1.parquet")
+    records = frame_to_records(df)
+    CRUDES = [r.name for r in records]
+
+    def bridge_yields(ratios, severity):
+        """Blend yield = crude-weighted mean of per-crude bridge yields."""
+        ys = np.array(
+            [
+                yields_from_assay(r.api, r.sulfur_pct, np.array(r.tbp_curve), severity)
+                for r in records
+            ]
+        )
+        return ratios @ ys
+
     objective = RefineryObjective(
-        crude_apis=np.array([33.5, 30.5, 33.8, 33.3, 31.7]),
-        crude_sulfurs=np.array([0.16, 0.24, 0.13, 2.9, 1.3]),
-        crude_costs=np.array([78.0, 77.5, 78.5, 72.0, 68.0]),
+        crude_apis=np.array([r.api for r in records]),
+        crude_sulfurs=np.array([r.sulfur_pct for r in records]),
+        # Placeholder delivered costs (USD/bbl) — synthetic, replaced by the
+        # EIA Brent anchor + documented differential in Phase 2 (row 9).
+        crude_costs=np.array([78.0, 76.0, 79.0, 70.0, 71.0]),
         product_prices=np.array([CONFIG.default_prices[p] for p in CONFIG.products]),
+        yield_model=bridge_yields,
     )
     return CONFIG, CRUDES, objective, simplex_repair
 
@@ -93,7 +114,7 @@ def _(
     status = "✅ feasible" if not violations else f"⚠️ {violations}"
     mo.md(
         f"""
-        ### Optimal crude diet (placeholder model — demo only)
+        ### Optimal crude diet (Stage-1 TBP bridge yields — real assays, placeholder costs)
         | Crude | Blend share |
         |---|---|
         {rows}
@@ -113,10 +134,12 @@ def _(mo):
     mo.md(
         """
         ---
-        **Transparency:** *-marked crude names/costs are illustrative placeholders;
-        yields come from a linear placeholder model. This is a methodology demo on
-        public/synthetic data — not Dangote's actual operations (spec §7).
-        Placeholder model is replaced by the ETR surrogate in Phase 3.
+        **Transparency:** crude assays are real published data (TotalEnergies /
+        ExxonMobil sheets — `docs/data_provenance.md` row 3); delivered costs and
+        product prices remain **placeholder** until the Phase 2 cost anchor and
+        EIA price pulls are wired in; yields come from the Stage-1 TBP cut-point
+        bridge (`docs/methodology.md`). Methodology demo on public data — not
+        Dangote's actual operations (spec §7).
         """
     )
     return

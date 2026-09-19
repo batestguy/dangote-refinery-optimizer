@@ -70,7 +70,9 @@ def parse_totalenergies_sheet(
     # Guards against false matches from cut-property rows ("NAPHTHA 80-150 13.0…")
     # and decimal fragments ("0.163 60 41.0"): temperature must be a multiple of
     # 10 in [80, 580], not preceded by '.'/'-'/digit, and vol% >= wt%.
-    row_re = re.compile(rf"(?<![.\-\d])(0?[1-5]\d0)\s+{_NUM}\s+{_NUM}(?=\s|$)")
+    # The curve is stored on the VOL% column for every crude (uniform basis for
+    # the Phase 2 bridge; TE publishes both, XOM publishes vol% only).
+    row_re = re.compile(rf"(?<![.\-\d])(0?[1-5]\d0|0[89]0)\s+{_NUM}\s+{_NUM}(?=\s|$)")
     seen: dict[float, float] = {}
     for ln in lines:
         for m in row_re.finditer(ln):
@@ -78,7 +80,7 @@ def parse_totalenergies_sheet(
             wt_pct = _parse_float(m.group(2))
             vol_pct = _parse_float(m.group(3))
             if 80 <= temp <= 580 and 0 <= wt_pct <= vol_pct + 1e-9 <= 100:
-                seen.setdefault(temp, wt_pct)
+                seen.setdefault(temp, vol_pct)
     curve = tuple(sorted(seen.items()))
     if len(curve) < 2:
         raise ValueError(f"{pdf_path}: no TBP rows parsed")
@@ -92,9 +94,11 @@ def parse_totalenergies_sheet(
         source="TotalEnergies crude oil data sheet",
         source_url=url,
         pulled="2026-09-19",
-        notes=f"assay date {assay_date}; TBP yield basis: wt%"
-        if assay_date
-        else "TBP yield basis: wt%",
+        notes=(
+            f"assay date {assay_date}; TBP yield basis: vol%"
+            if assay_date
+            else "TBP yield basis: vol%"
+        ),
     )
 
 

@@ -162,7 +162,9 @@ def stream_whole_crudes(
             break
     logger.info(
         "streamed %d whole-crude rows from %s (skipped %d malformed)",
-        len(collected), HF_DATASET_ID, skipped,
+        len(collected),
+        HF_DATASET_ID,
+        skipped,
     )
     return collected
 
