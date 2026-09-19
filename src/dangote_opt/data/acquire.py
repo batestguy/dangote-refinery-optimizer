@@ -33,6 +33,32 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+
+def load_cached_series(series_key: str, cache_dir: Path = Path("data/raw/eia")) -> pd.DataFrame:
+    """Read the largest cached pull for ``series_key`` (sidecar-located).
+
+    Offline-safe lookup by sidecar metadata (``series_key`` + row count) —
+    not cache-key reconstruction, which drifts when fetch params change.
+    Empty pulls (0 rows, e.g. probed-and-empty facets) are skipped.
+
+    Raises:
+        FileNotFoundError: no non-empty cache for the series.
+    """
+    best: tuple[int, Path] | None = None
+    for sidecar in sorted(cache_dir.glob("*.json")):
+        meta = json.loads(sidecar.read_text(encoding="utf-8"))
+        if meta.get("series_key") != series_key:
+            continue
+        parquet = sidecar.with_suffix(".parquet")
+        if parquet.exists():
+            cand = (int(meta.get("rows", 0)), parquet)
+            if best is None or cand[0] > best[0]:
+                best = cand
+    if best is None or best[0] == 0:
+        raise FileNotFoundError(f"no non-empty cache for {series_key!r} in {cache_dir}")
+    return pd.read_parquet(best[1])
+
+
 BASE_URL = "https://api.eia.gov/v2/"
 PAGE_LENGTH_MAX = 5000  # API hard cap; consider constraining with facets/start/end
 REQUEST_TIMEOUT_S = 30

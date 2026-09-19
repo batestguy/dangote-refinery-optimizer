@@ -228,6 +228,44 @@ Handwerk window already provides (§2). The surrogate therefore inherits the
 bridge's cited shape; spec §3.6's "no plant data is claimed" stance is
 preserved.
 
+## 7b. Scenario analysis (Phase 5) — correlated shocks, re-optimized per draw
+
+Implemented in `optimization/scenarios.py` + `scripts/run_scenarios.py`;
+numbers below are from the committed `data/derived/scenarios_phase5.json`
+(10,000 draws, seed 20260919, deterministic).
+
+**Shock design (the brief's open questions, answered with data):**
+
+- *Distribution?* Historical block bootstrap — each draw sums 12 consecutive
+  months of EIA Δlog prices (Brent + USGC gasoline/diesel/jet, 2015–2025,
+  131 monthly changes). Block-of-12 preserves seasonality and autocorrelation
+  that iid monthly sampling would destroy.
+- *Correlated shocks?* Yes — inherited empirically. The joint sampling carries
+  the real crude↔product co-movement (crack-spread dynamics); independent
+  per-product shocks would understate tail risk.
+- *FX / demand shifts?* Documented scope, not modeled: the refinery is a
+  USD single-period price-taker (spec §7 non-goals — no naira-costed inputs,
+  no demand-feedback channel). Deterministic per-product multipliers
+  (``price_multipliers``) are exposed as a demand-shift proxy.
+
+**Mechanics:** each draw re-solves the exact LP (Phase 4 skeleton — the
+constraints are price-independent, only the objective vector moves), i.e. the
+planner's optimal response per market state. Crude costs shift with the Brent
+draw by the common additive Δ = Brent_ref·(f−1), which cancels from the LP
+argmax (Σx = 1) and is subtracted from margins — differentials preserved by
+construction. Petrochem price stays the disclosed placeholder (constant).
+
+**Headline results (10k draws):** base $15.67 → mean $17.68 ± 8.29;
+**VaR(5%) $6.25, CVaR(5%) $1.42, P(loss) 0.8%**. The fixed base blend under
+the same draws averages $15.12 with CVaR(5%) **−$3.50** — so re-optimization
+is worth **+$2.56/bbl** on average *and* converts a negative tail into a
+positive one: it is a risk-management lever, not only a profit kicker. The
+optimal diet is two-regime: ANS optimal in 50.5% of draws, Forcados 47.9%
+(never both; Qua Iboe / Thunder Horse never) — the switch is driven by crack
+spread shape. Brent cost sensitivity is −1 per $/bbl by construction; the
+tornado (±10% product shocks, optimal response) is gasoline-first
+($12.79→$18.74), diesel close behind.
+
 ## 8. References
 
 - Gary, J.H., Handwerk, G.E., Kaiser, M.J. — *Petroleum Refining: Technology

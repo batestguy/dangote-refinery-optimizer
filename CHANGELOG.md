@@ -5,6 +5,21 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Phase 5 scenario analysis** (`optimization/scenarios.py`,
+  `scripts/run_scenarios.py`): 10,000-draw Monte Carlo over correlated price
+  scenarios — historical block bootstrap (12-month blocks of EIA Δlog prices,
+  Brent + USGC products 2015–2025) answers the brief's open questions
+  empirically (distribution = bootstrap; correlated shocks = inherited from
+  real co-moves; FX/demand = documented out-of-scope, USD price-taker). Every
+  draw re-optimizes via the exact LP (Phase 4 skeleton re-solve, ~8.5 ms/draw).
+  Headline: mean $17.68 ± 8.29, **VaR(5%) $6.25 / CVaR(5%) $1.42 / P(loss)
+  0.8%**; fixed-blend comparison shows **re-optimization is worth +$2.56/bbl
+  and flips the tail from −$3.50 to +$1.42 CVaR** — a risk lever, not just
+  profit. Two-regime diet (ANS 50.5% / Forcados 47.9% of draws). Artifacts:
+  `data/derived/scenarios_phase5.json` + fan/tornado figures in `docs/assets/`;
+  app renders the precomputed summary (HF cold-start-safe). Tests pin the
+  math: zero-draws ≡ base LP, Brent-shift argmax invariance, VaR/CVaR
+  relations, tornado monotonicity (127 tests).
 - **Phase 4 optimization driver + baseline contract** (`optimization/de_driver.py`,
   `optimization/baselines.py`, `viz/convergence.py`, `scripts/sensitivity_study.py`):
   vectorized DE (scipy `vectorized=True` over exact batch paths) with

@@ -249,6 +249,51 @@ def _(
 
 @app.cell
 def _(mo):
+    import json as _json
+    from pathlib import Path as _Path
+
+    summary = _json.loads(_Path("data/derived/scenarios_phase5.json").read_text(encoding="utf-8"))
+    sw = summary["switch_share"]
+    switch_rows = "\n".join(f"| {n} | {s:.0%} |" for n, s in sw.items())
+    p_loss = summary["probability_of_loss"]
+    mo.md(
+        f"""
+        ## Scenario risk (Phase 5 — 10,000 correlated price scenarios)
+
+        Historical block bootstrap over real EIA monthly co-moves (Brent + USGC
+        products, 2015–2025); each draw **re-optimizes the blend** via the exact
+        LP. Precomputed summary (`scripts/run_scenarios.py`, deterministic,
+        seed {summary["seed"]}):
+
+        | Metric (re-optimized per draw) | Value |
+        |---|---|
+        | Base margin | ${summary["base_margin"]:.2f}/bbl |
+        | Mean ± σ | ${summary["mean_margin"]:.2f} ± {summary["margin_std"]:.2f} |
+        | **VaR 5%** | ${summary["var_pct"]:.2f} |
+        | **CVaR 5%** | ${summary["cvar_pct"]:.2f} |
+        | P(loss) | {p_loss:.1%} |
+        | Fixed-blend mean (no re-opt) | ${summary["fixed_blend_mean"]:.2f} |
+        | **Value of re-optimization** | **${summary["reopt_value_mean"]:.2f}/bbl** |
+        | Fixed-blend CVaR 5% | ${summary["fixed_cvar_pct"]:.2f} (vs {summary["cvar_pct"]:.2f}) |
+
+        **Blend regime switch share** (share of scenarios each crude is optimal in):
+
+        | Crude | Optimal in |
+        |---|---|
+        {switch_rows}
+
+        *Shocks are real EIA co-moves (block bootstrap); petrochem price constant
+        (disclosed placeholder); USD single-period price-taker — no FX/demand
+        channel (spec §7). Figures: `docs/assets/margin_fan.png`,
+        `docs/assets/tornado_margin.png`; full summary:
+        `data/derived/scenarios_phase5.json`.*
+        """
+    )
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(
         """
         ---

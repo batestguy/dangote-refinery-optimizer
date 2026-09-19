@@ -133,22 +133,38 @@ def random_search_baseline(
     return BaselineResult("random_search", best_x, best_s, best_margin)
 
 
-def lp_baseline(
+@dataclass(frozen=True)
+class LPProblem:
+    """Reusable LP skeleton: physics/constraints fixed, objective price-driven.
+
+    Built once per slate (``build_lp_problem``); re-solved per price scenario
+    with ``solve_lp`` — the Phase 5 Monte Carlo does 10k re-solves without
+    ever rebuilding the constraint matrix (scenario LPs differ only in ``c``).
+    """
+
+    per_crude_yields_s0: FloatArray  # A: per-crude yields at s=0, (n, 4)
+    per_crude_yield_slopes: FloatArray  # B: yield slope per unit s, (n, 4)
+    crude_costs: FloatArray
+    a_ub: FloatArray
+    b_ub: FloatArray
+    a_eq: FloatArray
+    b_eq: FloatArray
+    n_vars: int
+    config: ProjectConfig
+
+
+def build_lp_problem(
     curves: list[FloatArray],
     crude_costs: FloatArray,
-    product_prices: FloatArray,
     qualities: list[CrudeQuality],
     config: ProjectConfig = CONFIG,
-) -> BaselineResult:
-    """Exact LP optimum over the bridge's affine-in-severity physics.
+) -> LPProblem:
+    """Construct the exact LP (constraint matrix independent of prices).
 
     Variables: ``z = [x (n), u (n)]`` with ``u_j = s·x_j`` (see module
     docstring). Quality specs are hard linear constraints built from the same
     ``BatchQualityModel`` coefficients the DE penalty uses — one source of
     truth, no drift between the soft (DE) and hard (LP) formulations.
-
-    Raises:
-        RuntimeError: if the LP solver fails or reports infeasibility.
     """
     n = config.n_crudes
     curves = [np.asarray(c, dtype=float) for c in curves]
@@ -174,9 +190,6 @@ def lp_baseline(
         severities=np.ones(n),
     )
     A, B = yields0, yields1 - yields0  # (n_crudes, 4)
-
-    # Objective: minimize −margin. z = [x, u]
-    c = np.concatenate([-(A @ product_prices) + crude_costs, -(B @ product_prices)])
 
     # u_j − x_j ≤ 0
     rows: list[tuple[FloatArray, float]] = [
@@ -238,13 +251,36 @@ def lp_baseline(
     A_ub = np.array([r for r, _ in rows])
     b_ub = np.array([b for _, b in rows])
 
+    return LPProblem(
+        per_crude_yields_s0=A,
+        per_crude_yield_slopes=B,
+        crude_costs=np.asarray(crude_costs, dtype=float),
+        a_ub=A_ub,
+        b_ub=b_ub,
+        a_eq=np.concatenate([np.ones(n), np.zeros(n)]).reshape(1, -1),
+        b_eq=np.array([1.0]),
+        n_vars=2 * n,
+        config=config,
+    )
+
+
+def solve_lp(problem: LPProblem, product_prices: FloatArray) -> BaselineResult:
+    """Solve the LP skeleton for one price vector (scenario re-solve)."""
+    n = problem.config.n_crudes
+    prices = np.asarray(product_prices, dtype=float)
+    c = np.concatenate(
+        [
+            -(problem.per_crude_yields_s0 @ prices) + problem.crude_costs,
+            -(problem.per_crude_yield_slopes @ prices),
+        ]
+    )
     res = linprog(
         c,
-        A_ub=A_ub,
-        b_ub=b_ub,
-        A_eq=np.concatenate([np.ones(n), np.zeros(n)]).reshape(1, -1),
-        b_eq=np.array([1.0]),
-        bounds=[(0.0, 1.0)] * (2 * n),
+        A_ub=problem.a_ub,
+        b_ub=problem.b_ub,
+        A_eq=problem.a_eq,
+        b_eq=problem.b_eq,
+        bounds=[(0.0, 1.0)] * problem.n_vars,
         method="highs",
     )
     if not res.success:
@@ -252,13 +288,22 @@ def lp_baseline(
     z = res.x
     x = simplex_repair(z[:n])
     severity = float(np.clip(z[n:].sum(), 0.0, 1.0))
-    yields = blend_yields_batch(
-        np.zeros(n),
-        np.zeros(n),
-        per_crude_cuts=cuts,
-        light_naphtha=light,
-        ratios_batch=x.reshape(1, -1),
-        severities=np.array([severity]),
-    )[0]
-    margin = float(yields @ product_prices - x @ crude_costs)
+    margin = float(
+        (x @ problem.per_crude_yields_s0 + severity * x @ problem.per_crude_yield_slopes) @ prices
+        - x @ problem.crude_costs
+    )
     return BaselineResult("lp", x, severity, margin)
+
+
+def lp_baseline(
+    curves: list[FloatArray],
+    crude_costs: FloatArray,
+    product_prices: FloatArray,
+    qualities: list[CrudeQuality],
+    config: ProjectConfig = CONFIG,
+) -> BaselineResult:
+    """Exact LP optimum over the bridge's affine-in-severity physics.
+
+    Convenience wrapper: ``solve_lp(build_lp_problem(...), prices)``.
+    """
+    return solve_lp(build_lp_problem(curves, crude_costs, qualities, config), product_prices)
