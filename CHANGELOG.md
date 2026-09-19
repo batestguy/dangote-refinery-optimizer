@@ -22,6 +22,7 @@ All notable changes to this project. Format based on Keep a Changelog.
   Electric Sheep schema; Phase 4 time compression recorded as open item 7;
   problem statement baseline aligned to spec ("default severity"); setup-steps
   step 6 marked done; data provenance clarifies CrudeOilMix's gap-filler role.
+  knowledge.md handover refreshed (2026-09-19 session).
 
 ### Added
 - Objective: quadratic penalty for API-window / sulfur-cap violations
