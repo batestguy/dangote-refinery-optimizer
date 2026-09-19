@@ -14,7 +14,7 @@
 | 6 | `electricsheepafrica/africa-synth-energy-oilgas-refineries-nigeria` (HF) | Dangote metadata (650 kbpd, utilization ~0.8) | HF datasets | MIT | 🔜 Phase 1 | SYNTHETIC — labeled wherever shown |
 | 7 | FCCU operational dataset (mlforpse.com) | yield-vs-severity *shape* calibration for Stage 2 | download | open | 🔜 Phase 2 | No linkage to assay slate — used for response shape only |
 | 8 | open.er-api.com | NGN/USD FX for dashboard ticker | REST, no key | fair use | 🔜 Phase 6 | Cache 1 h |
-| 9 | Bonny Light / Forcados spot | crude cost anchor | public spot series / Brent-minus-differential convention | public | 🟡 partial 2026-09-19: EIA carries no Bonny Light spot; `EPCBRENT` (verified, row 2) gives the Brent anchor — the Bonny Light differential must come from NUPRC/NNPC publications or be assumed + documented | Any assumed differential is documented right here |
+| 9 | Crude cost anchor: EIA Brent + per-grade differentials | delivered crude costs | EIA REST (`data/costs.py`) | public | ✅ **2026-09-19, live-verified** — `brent_spot` added to the catalog (`petroleum/pri/spt`, product `EPCBRENT`, process `PF4`, duoarea **`ZEU`** = Europe — Brent's only area on this route, probed; NOT `RGC`), series `RBRTE`, native **$/bbl**. Real pull cached: 132 monthly rows 2015–2025; trailing-12m reference = **$69.10/bbl**. Delivered cost = Brent + differential per grade (differential table in `data/costs.py`, every value **ASSUMED** with quality rationale; artifact `data/derived/costs_phase2.parquet` + sidecar via `scripts/build_costs.py`) | Refresh path: OPEC MOMR publishes actual Bonny Light / Forcados / Qua Iboe monthly averages — replace ASSUMED differentials there when pulled (Phase 2+ task). Assumption direction sanity-tested (premium scales with API within sulfur class; sour grades discount) |
 
 ## Phase 1 implementation status (2026-09-19)
 
@@ -24,7 +24,7 @@
 
 ## App placeholder disclosure
 
-`app/app.py` slate (names, APIs, sulfurs, costs marked `*`) is **illustrative placeholder** until rows 3/9 land in Phase 1. Prices come from `CONFIG.default_prices` until row 2 lands.
+`app/app.py` runs the **real** assay slate (row 3) with **real Brent-anchored costs** (row 9 — differentials ASSUMED and disclosed in the app footer). Product prices still come from `CONFIG.default_prices` until the EIA USGC series (row 2) is wired into the objective.
 
 ## Data quality rules (Phase 1 exit criteria)
 

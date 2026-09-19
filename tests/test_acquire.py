@@ -197,6 +197,7 @@ def test_catalog_series_are_pinned_to_verified_routes():
         "us_product_prices": "petroleum/pri/spt",
         "us_refinery_inputs": "petroleum/sum/snd",
         "us_crude_imports": "petroleum/move/impcus",
+        "brent_spot": "petroleum/pri/spt",
     }
     for s in CATALOG.values():
         assert s.data_columns == ("value",)  # units is NOT a valid data column

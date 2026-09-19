@@ -5,6 +5,17 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Cost anchor (provenance row 9 complete): `brent_spot` series live-verified
+  and added to the EIA catalog (duoarea `ZEU` — Brent's only area on the spot
+  route); `data/costs.py` models delivered cost = trailing-12m EIA Brent
+  ($69.10/bbl as of 2026-09-19) + per-grade differential. Every differential is
+  **ASSUMED** with a documented quality rationale (refresh path: OPEC MOMR
+  actuals); assumption direction sanity-tested (premium scales with API within
+  a sulfur class; sour grades discount; table covers the exact slate, strict
+  KeyError on unknown grades). Committed artifact
+  `data/derived/costs_phase2.parquet` + sidecar (`scripts/build_costs.py`);
+  app wired to real costs with fallback to the committed artifact's Brent
+  reference when no key/cache is present. 9 new tests (82 total).
 - Phase 2 Stage-1 bridge (`features/bridge.py`): TBP cut-point integration
   (interpolated, basis-uniform vol% curves) + severity-dependent FCC
   conversion (40→80% of VGO, cited Gary & Handwerk ranges) with documented

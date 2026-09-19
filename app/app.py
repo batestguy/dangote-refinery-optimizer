@@ -3,8 +3,10 @@
 The file that deploys to HuggingFace Spaces unchanged (Phase 6, spec §3.7).
 Runs locally with:  uv run marimo run app/app.py
 
-NOTE: uses the placeholder linear yield model until the Phase 3 ETR surrogate
-lands. All numbers shown are methodology-demo outputs, not real Dangote data.
+Yields come from the Stage-1 TBP bridge (real published assays) and costs from
+the EIA Brent anchor + documented differentials; product prices remain
+placeholder until the EIA USGC series is wired in. Methodology-demo outputs,
+not real Dangote data.
 """
 
 import marimo
@@ -24,18 +26,34 @@ def _():
 
 @app.cell
 def _(np):
+    import json
+    from pathlib import Path
+
     import pandas as pd
 
     from dangote_opt.config import CONFIG
     from dangote_opt.data.assays import frame_to_records
+    from dangote_opt.data.costs import build_crude_costs, load_brent_reference
     from dangote_opt.features.bridge import yields_from_assay
     from dangote_opt.optimization.objective import RefineryObjective, simplex_repair
 
-    # REAL slate — parsed published assays (docs/data_provenance.md row 3);
-    # costs are still placeholder until the Phase 2 cost anchor (row 9) lands.
+    # REAL slate — parsed published assays (docs/data_provenance.md row 3).
     df = pd.read_parquet("data/derived/slate_phase1.parquet")
     records = frame_to_records(df)
     CRUDES = [r.name for r in records]
+
+    # REAL cost anchor — EIA Brent trailing-12m average + documented per-grade
+    # differentials (docs/data_provenance.md row 9; differentials are ASSUMED).
+    # Falls back to the committed artifact's Brent reference when no live key.
+    try:
+        brent_ref, _ = load_brent_reference()
+    except FileNotFoundError:
+        cost_sidecar = json.loads(
+            Path("data/derived/costs_phase2.json").read_text(encoding="utf-8")
+        )
+        brent_ref = float(cost_sidecar["brent_reference_usd_bbl"])
+    costs_map = build_crude_costs([r.crude_id for r in records], brent_ref)
+    COSTS = np.array([costs_map[r.crude_id] for r in records])
 
     def bridge_yields(ratios, severity):
         """Blend yield = crude-weighted mean of per-crude bridge yields."""
@@ -50,13 +68,11 @@ def _(np):
     objective = RefineryObjective(
         crude_apis=np.array([r.api for r in records]),
         crude_sulfurs=np.array([r.sulfur_pct for r in records]),
-        # Placeholder delivered costs (USD/bbl) — synthetic, replaced by the
-        # EIA Brent anchor + documented differential in Phase 2 (row 9).
-        crude_costs=np.array([78.0, 76.0, 79.0, 70.0, 71.0]),
+        crude_costs=COSTS,
         product_prices=np.array([CONFIG.default_prices[p] for p in CONFIG.products]),
         yield_model=bridge_yields,
     )
-    return CONFIG, CRUDES, objective, simplex_repair
+    return CONFIG, CRUDES, COSTS, objective, simplex_repair
 
 
 @app.cell
@@ -114,7 +130,7 @@ def _(
     status = "✅ feasible" if not violations else f"⚠️ {violations}"
     mo.md(
         f"""
-        ### Optimal crude diet (Stage-1 TBP bridge yields — real assays, placeholder costs)
+        ### Optimal crude diet (Stage-1 TBP bridge yields + real Brent-anchored costs)
         | Crude | Blend share |
         |---|---|
         {rows}
@@ -135,11 +151,12 @@ def _(mo):
         """
         ---
         **Transparency:** crude assays are real published data (TotalEnergies /
-        ExxonMobil sheets — `docs/data_provenance.md` row 3); delivered costs and
-        product prices remain **placeholder** until the Phase 2 cost anchor and
-        EIA price pulls are wired in; yields come from the Stage-1 TBP cut-point
-        bridge (`docs/methodology.md`). Methodology demo on public data — not
-        Dangote's actual operations (spec §7).
+        ExxonMobil sheets — `docs/data_provenance.md` row 3); delivered costs are
+        anchored to the real EIA Brent spot average plus documented **ASSUMED**
+        per-grade differentials (row 9) — refresh path: OPEC MOMR. Product prices
+        remain **placeholder** until the EIA USGC series is wired in; yields come
+        from the Stage-1 TBP cut-point bridge (`docs/methodology.md`). Methodology
+        demo on public data — not Dangote's actual operations (spec §7).
         """
     )
     return

@@ -1,0 +1,54 @@
+{
+  "artifact": "data/derived/costs_phase2.parquet",
+  "generated": "2026-09-19",
+  "brent_reference_usd_bbl": 69.1,
+  "brent_window": {
+    "months": 12,
+    "first": "2025-01",
+    "last": "2025-12",
+    "series": "EIA RBRTE (petroleum/pri/spt, ZEU, PF4) \u2014 provenance row 2"
+  },
+  "differentials": [
+    {
+      "crude_id": "bonny_light",
+      "name": "Bonny Light",
+      "differential_usd_bbl": 1.0,
+      "status": "ASSUMED",
+      "basis": "light sweet (API 34.9, S 0.15%): quality premium, freight-discounted",
+      "cost_usd_bbl": 70.1
+    },
+    {
+      "crude_id": "forcados",
+      "name": "Forcados",
+      "differential_usd_bbl": 0.5,
+      "status": "ASSUMED",
+      "basis": "light sweet, slightly heavier (API 31.5, S 0.22%): smaller premium",
+      "cost_usd_bbl": 69.6
+    },
+    {
+      "crude_id": "qua_iboe",
+      "name": "Qua Iboe",
+      "differential_usd_bbl": 1.5,
+      "status": "ASSUMED",
+      "basis": "lightest sweet Nigerian (API 37.3, S 0.12%): largest quality premium",
+      "cost_usd_bbl": 70.6
+    },
+    {
+      "crude_id": "alaska_north_slope",
+      "name": "Alaska North Slope",
+      "differential_usd_bbl": -2.5,
+      "status": "ASSUMED",
+      "basis": "medium sour (API 32.3, S 1.04%): sulfur discount dominates",
+      "cost_usd_bbl": 66.6
+    },
+    {
+      "crude_id": "thunder_horse",
+      "name": "Thunder Horse",
+      "differential_usd_bbl": -1.0,
+      "status": "ASSUMED",
+      "basis": "medium, moderate sulfur (API 34.5, S 0.76%): mild sour discount",
+      "cost_usd_bbl": 68.1
+    }
+  ],
+  "note": "differentials are ASSUMED quality-based values \u2014 refresh from OPEC MOMR"
+}

@@ -106,6 +106,21 @@ CATALOG: dict[str, EiaSeries] = {
         },
         notes="Verified 2026-09-19: US crude imports from Nigeria (thousand bbl/d)",
     ),
+    # Europe Brent spot FOB — the crude-cost anchor (provenance row 9): delivered
+    # slate cost = Brent + documented per-grade differential (data/costs.py).
+    # Native $/bbl — no unit transform needed (unlike the product-price series).
+    "brent_spot": EiaSeries(
+        key="brent_spot",
+        route="petroleum/pri/spt",
+        data_columns=("value",),
+        frequency="monthly",
+        facets={
+            "product": ("EPCBRENT",),  # UK Brent Crude Oil
+            "process": ("PF4",),  # Spot Price FOB
+            "duoarea": ("ZEU",),  # Europe — Brent's only area on this route
+        },
+        notes="Verified 2026-09-19: Europe Brent spot FOB (series RBRTE, ZEU, $/bbl)",
+    ),
 }
 
 
