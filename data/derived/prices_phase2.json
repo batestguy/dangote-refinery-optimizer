@@ -1,0 +1,18 @@
+{
+  "artifact": "data/derived/prices_phase2.parquet",
+  "generated": "2026-09-19",
+  "window_months": 12,
+  "unit_transform": "$/gal x 42 = $/bbl (EIA USGC spot series are $/gal)",
+  "series": {
+    "gasoline": "EPMRU (Conventional Regular Gasoline, RGC, PF4)",
+    "diesel": "EPD2DXL0 (ULSD 0-15 ppm, RGC, PF4)",
+    "jet": "EPJK (Kerosene-Type Jet Fuel, RGC, PF4)"
+  },
+  "prices_usd_bbl": {
+    "gasoline": 84.77,
+    "diesel": 93.49,
+    "jet": 88.94,
+    "petrochem": 70.0
+  },
+  "disclosure": "petrochem pool price is a PLACEHOLDER (CONFIG.default_prices) \u2014 no citable EIA spot series exists for the LPG/propylene/residue basket (probed 2026-09-19); refresh path documented in data/prices.py"
+}

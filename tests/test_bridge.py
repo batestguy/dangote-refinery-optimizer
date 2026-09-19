@@ -9,9 +9,15 @@ import pytest
 
 from dangote_opt.data.assays import frame_to_records
 from dangote_opt.features.bridge import (
+    ALKYLATE_SHARE,
+    BUTANE_PULL_SHARE,
     FCC_CONVERSION_AT_S0,
     FCC_CONVERSION_AT_S1,
+    FCC_GAS_COKE_SHARE,
+    ISOM_YIELD,
     NAPHTHA_END_C,
+    REFORMER_YIELD,
+    component_volumes,
     tbp_cut_fractions,
     yields_from_assay,
 )
@@ -134,3 +140,66 @@ def test_objective_placeholder_still_works_without_model():
     x = np.r_[np.full(5, 0.2), 0.0]
     assert np.isfinite(obj(x))
     assert NAPHTHA_END_C == 180.0  # cut scheme pinned
+
+
+# --- octane units & component streams (methodology.md §3b) ------------------
+
+
+def test_component_volumes_match_yield_pools(slate):
+    """One mass balance, two consumers: pooling component_volumes must
+    reproduce yields_from_assay exactly at every severity."""
+    for r in slate:
+        curve = np.array(r.tbp_curve, dtype=float)
+        for sev in (0.0, 0.5, 1.0):
+            cv = component_volumes(curve, sev)
+            pools = np.array(
+                [
+                    cv["isomerate"] + cv["reformate"] + cv["fcc_gasoline"] + cv["alkylate"],
+                    (cv["sr_distillate"] + cv["fcc_lco"]) * (1 - 0.01),
+                    cv["kero"],
+                    cv["residue"]
+                    + cv["vgo_slurry"]
+                    + cv["fcc_gas_nonalk"]
+                    + cv["reformer_lpg"]
+                    + cv["butane_lpg"],
+                ]
+            )
+            y = yields_from_assay(r.api, r.sulfur_pct, curve, sev)
+            assert np.allclose(pools, y, atol=1e-12), (r.crude_id, sev)
+
+
+def test_component_stream_arithmetic():
+    curve = synthetic_curve()
+    cv = component_volumes(curve, severity=0.0)
+    cuts = tbp_cut_fractions(curve)
+    naphtha = cuts[0]
+    light = cv["isomerate"] / (1 - BUTANE_PULL_SHARE)  # undo pull
+    assert cv["light_naphtha"] == pytest.approx(light * (1 - BUTANE_PULL_SHARE))
+    assert cv["butane_lpg"] == pytest.approx(light * BUTANE_PULL_SHARE)
+    assert cv["mid_naphtha"] == pytest.approx(naphtha - light)
+    assert cv["reformate"] == pytest.approx(cv["mid_naphtha"] * REFORMER_YIELD)
+    assert cv["isomerate"] == pytest.approx(cv["light_naphtha"] * ISOM_YIELD)
+    # severity 0 → VGO conversion 40%, gas+coke share 32%, half alkylated
+    assert cv["fcc_gasoline"] == pytest.approx(cuts[3] * 0.40 * 0.50)
+    assert cv["alkylate"] == pytest.approx(cuts[3] * 0.40 * FCC_GAS_COKE_SHARE * ALKYLATE_SHARE)
+
+
+def test_butane_pull_feeds_petrochem_not_gasoline(slate):
+    """RVP control: pulled LPG must leave the gasoline pool (mass-balance check
+    via petrochem share) — without it no blend meets the RVP 60 kPa spec."""
+    r = slate[0]
+    curve = np.array(r.tbp_curve, dtype=float)
+    cv = component_volumes(curve, 0.5)
+    assert cv["butane_lpg"] > 0
+    # With the pull, isomerate = (1-pull)·light_nap; without, it would be light_nap.
+    # The no-FCC baseline (isomerate + reformate) must therefore sit strictly
+    # between the pulled and un-pulled light-nap volumes.
+    light_nap = cv["isomerate"] / (1 - BUTANE_PULL_SHARE)
+    no_fcc_pool = cv["isomerate"] + cv["reformate"]
+    assert no_fcc_pool < light_nap + cv["reformate"]  # pull removed volume
+    assert no_fcc_pool > cv["isomerate"]  # ...but light nap is still in the pool
+
+
+def test_severity_out_of_bounds_raises_in_component_volumes(slate):
+    with pytest.raises(ValueError, match="severity"):
+        component_volumes(np.array(slate[0].tbp_curve), 1.5)

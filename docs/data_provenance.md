@@ -24,7 +24,7 @@
 
 ## App placeholder disclosure
 
-`app/app.py` runs the **real** assay slate (row 3) with **real Brent-anchored costs** (row 9 — differentials ASSUMED and disclosed in the app footer). Product prices still come from `CONFIG.default_prices` until the EIA USGC series (row 2) is wired into the objective.
+`app/app.py` runs the **real** assay slate (row 3) with **real Brent-anchored costs** (row 9 — differentials ASSUMED, disclosed in the app footer) and **real USGC product prices** for gasoline/diesel/jet (row 2 series wired into the objective, 2026-09-19; 12-mo averages: gasoline $84.77/bbl, diesel $93.49, jet $88.94). The **petrochem pool price is a disclosed PLACEHOLDER** (CONFIG.default_prices) — no citable EIA spot series exists for the LPG/propylene/residue basket (probed 2026-09-19: no naphtha spot; `pri/resid`/`pri/refoth` are retail/wholesale by state with no Gulf-Coast monthly spot; refresh path in `data/prices.py`). Quality-spec component values are PUBLISHED (TE cuts) or ASSUMED-with-rationale (XOM rows) per methodology §3c.
 
 ## Data quality rules (Phase 1 exit criteria)
 

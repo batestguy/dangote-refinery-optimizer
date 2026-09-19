@@ -19,11 +19,22 @@ Model (per crude, at FCC severity s ∈ [0, 1]):
     (2007) nominal VGO-FCC ranges. Unconverted VGO ("slurry") stays heavy.
 3.  Hydrotreating: sulfur pickup is *quality*, not yield — the ICCT tutorial
     (Leiby, 2011, exhibit 17) puts H2-side yield loss at ≈1 vol%; applied here.
-4.  Naphtha pool = SR naphtha + FCC gasoline; distillate pool = SR 180–360 +
-    FCC LCO + unconverted VGO portion; jet = SR 180–260 share; petrochem
-    (feedstock) = residue + slurry + FCC gas (propylene/PGP proxy).
+4.  Octane units (fixed-fraction transforms — without them no realistic blend
+    meets the RON 91 gasoline spec, because SR naphtha blends at RON ≈ 58):
+        light naphtha (<80 °C)  → isomerate, yield-neutral (RON uplift constant,
+                                  features/quality.py)
+        mid naphtha (80–180 °C) → reformate at REFORMER_YIELD (rest → LPG/H2,
+                                  routed to the petrochem/feed pool)
+        FCC gas + coke          → alkylate at ALKYLATE_SHARE (rest = fuel gas +
+                                  coke + propylene → petrochem/feed pool)
+5.  Product pools: gasoline = isomerate + reformate + alkylate; jet = SR kero
+    (180–260 °C); diesel = SR distillate (260–360 °C) + FCC LCO, less HT loss;
+    petrochem/feed = residue + slurry + un-alkylated FCC gas + reformer LPG.
 
 Yields are fractions of whole crude feed; they sum to ≈1 by construction.
+``component_volumes()`` exposes the pre-pooling streams so the quality-spec
+constraints (features/quality.py) can compute pool qualities from the same
+mass balance — one source of truth.
 """
 
 from __future__ import annotations
@@ -53,6 +64,34 @@ FCC_LCO_SHARE = 0.18
 FCC_GAS_COKE_SHARE = 0.32  # 1 − 0.50 − 0.18
 # Hydrotreating yield loss (ICCT tutorial exhibit 17: ≈1 vol%)
 HYDROTREATER_YIELD_LOSS = 0.01
+
+# --- octane units — cited ranges, see methodology.md §3b -------------------
+# Reformer: mid naphtha → reformate. Reformate yield 80–88 vol% of feed at
+# high severity (Gary & Handwerk ch. 9 reformer yield tables); balance is LPG
+# + H2 → petrochem/feed pool. Reformate RON set by reformer severity, not by
+# the crude — constant in features/quality.py (cited there).
+REFORMER_YIELD = 0.85
+# Alkylation: the FCC C3/C4 fraction (inside the gas+coke lump) → alkylate at
+# ~50% of that lump; the rest is fuel gas + coke + polymer-grade propylene
+# (→ petrochem pool). Conservative: alkylate yield on actual C4s is ≈1.0–1.7
+# vol (Gary & Handwerk ch. 7), but the gas+coke lump also contains dry gas and
+# coke, so 50% of the lump keeps the mass balance honest.
+ALKYLATE_SHARE = 0.50
+# Light naphtha (<80 °C) → isomerization: yield-neutral (isomerization is a
+# rearrangement, ≈100 vol% yield), octane uplift is applied in
+# features/quality.py where the RON math lives.
+ISOM_YIELD = 1.0
+
+# Butane pull-off: the front end of SR naphtha (C4/C5-rich, highest-RVP
+# material) is stripped to LPG for gasoline-pool RVP control — standard
+# practice (RVP is managed via butane content). Share of light naphtha,
+# ASSUMED (methodology.md §3b); routes that volume to the petrochem/LPG pool.
+BUTANE_PULL_SHARE = 0.25
+
+# Light-naphtha boundary inside the SR naphtha cut (<180 °C): the TotalEnergies
+# sheets publish quality for 15–80 °C vs 80–175 °C separately, and only the
+# light fraction goes to isomerization.
+LIGHT_NAPHTHA_END_C = 80.0
 
 
 def _interpolate_vol_pct(curve: FloatArray, temp_c: float) -> float:
@@ -120,6 +159,8 @@ def yields_from_assay(
     curve = np.asarray(tbp_curve, dtype=float)
 
     naphtha, kero, diesel_cut, vgo, residue = tbp_cut_fractions(curve)
+    light_nap = _interpolate_vol_pct(curve, LIGHT_NAPHTHA_END_C) / 100.0
+    mid_nap = naphtha - light_nap
 
     # FCC: severity-dependent fraction of VGO converts; split into
     # gasoline / LCO / gas+coke (shares above, methodology.md).
@@ -129,14 +170,81 @@ def yields_from_assay(
     fcc_gas_coke = vgo * conversion * FCC_GAS_COKE_SHARE
     slurry = vgo * (1.0 - conversion)  # unconverted VGO
 
+    # Octane units (fixed fractions — methodology.md §3b)
+    butane_lpg = light_nap * BUTANE_PULL_SHARE
+    light_nap_net = light_nap * (1.0 - BUTANE_PULL_SHARE)
+    reformate = mid_nap * REFORMER_YIELD
+    reformer_lpg = mid_nap * (1.0 - REFORMER_YIELD)
+    alkylate = fcc_gas_coke * ALKYLATE_SHARE
+    fcc_gas_nonalk = fcc_gas_coke * (1.0 - ALKYLATE_SHARE)
+
     # Product pools (fractions of whole crude):
-    gasoline = naphtha + fcc_gasoline
+    gasoline = light_nap_net * ISOM_YIELD + reformate + fcc_gasoline + alkylate
     jet = kero  # SR kerosene cut → jet pool
     diesel = diesel_cut + fcc_lco  # SR 260–360 + light cycle oil
-    petrochem = residue + slurry + fcc_gas_coke
+    petrochem = residue + slurry + fcc_gas_nonalk + reformer_lpg + butane_lpg
 
     yields = np.array([gasoline, diesel, jet, petrochem])
     # Hydrotreating side reactions lose ≈1% of distillate-range material
     # (ICCT exhibit 17) — applied to the diesel pool, conservative for the rest.
     yields[1] *= 1.0 - HYDROTREATER_YIELD_LOSS
     return np.clip(yields, 0.0, None)
+
+
+def component_volumes(
+    tbp_curve: FloatArray,
+    severity: float,
+) -> dict[str, float]:
+    """Pre-pooling stream volumes (fractions of whole-crude feed) at a severity.
+
+    The quality model (features/quality.py) pools these with its per-stream
+    quality vectors; ``yields_from_assay`` pools the same streams by volume.
+    One mass balance, two consumers — no drift between yield and quality.
+
+    Returns:
+        Dict of stream → volume fraction of feed:
+        light_naphtha, mid_naphtha (SR splits at 80 °C), reformate,
+        reformer_lpg, isomerate (= light naphtha; named for clarity),
+        fcc_gasoline, alkylate, fcc_gas_nonalk (fuel gas + coke + propylene),
+        kero, sr_distillate, fcc_lco, vgo_slurry, residue.
+    """
+    curve = np.asarray(tbp_curve, dtype=float)
+    if not 0.0 <= severity <= 1.0:
+        raise ValueError(f"severity must be in [0, 1], got {severity}")
+
+    # Reuse the cut integrator: [naphtha, kero, diesel, vgo, residue]
+    cuts = tbp_cut_fractions(curve)
+    naphtha, kero, diesel_cut, vgo, residue = cuts
+    light_nap = _interpolate_vol_pct(curve, LIGHT_NAPHTHA_END_C) / 100.0
+    mid_nap = naphtha - light_nap
+
+    conversion = FCC_CONVERSION_AT_S0 + severity * (FCC_CONVERSION_AT_S1 - FCC_CONVERSION_AT_S0)
+    fcc_gasoline = vgo * conversion * FCC_GASOLINE_SHARE
+    fcc_lco = vgo * conversion * FCC_LCO_SHARE
+    fcc_gas_coke = vgo * conversion * FCC_GAS_COKE_SHARE
+    slurry = vgo * (1.0 - conversion)
+
+    # Octane units (fixed fractions — methodology.md §3b)
+    butane_lpg = light_nap * BUTANE_PULL_SHARE
+    light_nap_net = light_nap * (1.0 - BUTANE_PULL_SHARE)
+    reformate = mid_nap * REFORMER_YIELD
+    reformer_lpg = mid_nap * (1.0 - REFORMER_YIELD)
+    alkylate = fcc_gas_coke * ALKYLATE_SHARE
+    fcc_gas_nonalk = fcc_gas_coke * (1.0 - ALKYLATE_SHARE)
+
+    return {
+        "light_naphtha": light_nap_net,
+        "mid_naphtha": mid_nap,
+        "isomerate": light_nap_net * ISOM_YIELD,
+        "reformate": reformate,
+        "reformer_lpg": reformer_lpg,
+        "fcc_gasoline": fcc_gasoline,
+        "alkylate": alkylate,
+        "fcc_gas_nonalk": fcc_gas_nonalk,
+        "kero": kero,
+        "sr_distillate": diesel_cut,
+        "fcc_lco": fcc_lco,
+        "vgo_slurry": slurry,
+        "residue": residue,
+        "butane_lpg": butane_lpg,
+    }

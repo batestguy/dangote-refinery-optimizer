@@ -10,7 +10,9 @@ Constraint handling for DE (brief §6 Phase 4 open question, decided here):
                           any realistic margin gain; the quadratic term steers DE back
                           from gross violations.
     * severity bounds   → clipped.
-Quality-spec LBIs (RON, cetane, RVP, …) join the penalty block in Phase 2/4.
+Quality-spec LBIs (RON, cetane, freeze, RVP) join the penalty block via an
+injectable ``quality_model`` (features/quality.py computes pool qualities from
+the bridge's component streams; spec §4 decision 14, implemented Phase 2).
 
 Baseline contract (spec §3.4, locked): the DE result is always reported
 alongside equal-weight, random-search, and LP optima on the same price vector.
@@ -26,12 +28,18 @@ from numpy.typing import NDArray
 
 from dangote_opt.config import CONFIG, ProjectConfig
 from dangote_opt.features.blend import blend_api, blend_sulfur
+from dangote_opt.features.quality import quality_violation_magnitude, quality_violations
 
 FloatArray = NDArray[np.float64]
 
 # Yield-model strategy: (blend_ratios, severity) -> 4 yields. The Phase 3 ETR
 # surrogate plugs in behind this exact signature (spec §3.6).
 YieldModel = Callable[[FloatArray, float], FloatArray]
+
+# Quality-model strategy: (blend_ratios, severity) -> pool-quality dict
+# (gasoline_ron, gasoline_rvp_kpa, jet_freeze_c, diesel_cetane_idx). The app
+# injects a closure over the slate's curves + component qualities.
+QualityModel = Callable[[FloatArray, float], dict[str, float]]
 
 
 def simplex_repair(x: FloatArray) -> FloatArray:
@@ -61,6 +69,7 @@ class RefineryObjective:
     product_prices: FloatArray
     config: ProjectConfig = CONFIG
     yield_model: YieldModel | None = field(default=None)
+    quality_model: QualityModel | None = field(default=None)
 
     def __post_init__(self) -> None:
         n = self.config.n_crudes
@@ -133,6 +142,8 @@ class RefineryObjective:
             violated.append(f"S_blend {s:.2f} > {self.config.sulfur_blend_pct_max}")
         if not (self.config.severity_bounds[0] <= severity <= self.config.severity_bounds[1]):
             violated.append(f"severity {severity:.2f} outside bounds")
+        if self.quality_model is not None:
+            violated.extend(quality_violations(self.quality_model(ratios, severity)))
         return violated
 
     # -- objective -------------------------------------------------------------
@@ -148,4 +159,7 @@ class RefineryObjective:
         x = simplex_repair(decision_vars[: self.config.n_crudes])
         severity = float(np.clip(decision_vars[-1], *self.config.severity_bounds))
         penalty = self.config.constraint_penalty * self.violation_magnitude(x)
+        if self.quality_model is not None:
+            quals = self.quality_model(x, severity)
+            penalty += self.config.constraint_penalty * quality_violation_magnitude(quals)
         return -self.margin(x, severity) + penalty

@@ -44,14 +44,73 @@ and anchored at (15 °C, 0 %) by the parser.
   enters Phase 2 constraints via blend indices, not via the bridge (spec §3.3).
 - Naphtha/kero/jet pools are not HT-adjusted (conservative; documented here).
 
-## 4. Product pooling
+## 3b. Octane units (fixed-fraction yield transforms)
+
+Physical motivation: straight-run naphtha blends at **RON ≈ 58** (measured:
+Bonny Light 80–150 °C cut RON 54.3, TE sheet) — no real blend meets the RON 91
+gasoline spec without octane units. The bridge therefore routes:
+
+| Transform | Feed | Yield used | Cited basis |
+|---|---|---|---|
+| Isomerization | light naphtha (< 80 °C) | ≈ 100 % (isomerate) | rearrangement reaction, no yield loss (Gary & Handwerk ch. 8) |
+| Reforming | mid naphtha (80–180 °C) | **85 %** reformate; balance LPG+H₂ → petrochem pool | reformate yield 80–88 vol% of feed at high severity (Gary & Handwerk ch. 9 reformer yield tables); 85 = midpoint |
+| Alkylation | FCC C₃/C₄ (inside the gas+coke lump) | **50 %** of the lump → alkylate; balance = fuel gas + coke + propylene → petrochem pool | conservative share: alkylate yield on actual C₄s is ≈ 1.0–1.7 vol (Gary & Handwerk ch. 7), but the gas+coke lump also contains dry gas and coke |
+| Butane pull-off | light-naphtha front end | **25 %** of light naphtha → LPG (petrochem pool) | RVP is managed via butane content (standard practice); share ASSUMED — the constraint binds via the RVP math in §3c, so the exact share shifts the blend, not feasibility |
+
+The octane uplift itself lives in §3c (unit-output qualities), because RON is a
+*quality*, not a yield. These transforms change the yield vector (gasoline pool
+= isomerate + reformate + FCC gasoline + alkylate) and are reflected in the
+pooling table (§4).
+
+## 3c. Quality-spec constraints (blend indices)
+
+Implemented in `features/quality.py`; enforced via a linear+quadratic penalty
+(same form and `CONFIG.constraint_penalty` scale as the blend-property block).
+
+**Blending rules** (spec §4 decision 14 — LBI where the property is non-linear):
+
+| Property | Rule | Citation |
+|---|---|---|
+| Gasoline RON | linear by volume | octane numbers are engine indices; linear volumetric blending is the LP-standard base rule (Gary & Handwerk ch. 10). The interactive Ethyl RT-70 scheme (Healy et al.) is more accurate but not openly reproducible → traceability rule |
+| Gasoline RVP | **RVP^1.25 index** blended linearly, inverted | the widely used psi^1.25 index (Haverly Systems, "Blending by Index") |
+| Jet freeze point | linear by volume | standard practice for closely-boiling single-pool property |
+| Diesel cetane index | linear by volume | standard for cetane *index* blends (D4737A values from the sheets) |
+
+**Unit-output qualities** (constant, severity-free — reformate RON is set by
+reformer severity, not by the crude):
+
+| Stream | RON | RVP kPa | Basis |
+|---|---|---|---|
+| isomerate | crude light-naphtha RON + 4 | 55 | uplift 78→~82, typical isomerization endpoint (G&H ch. 8) |
+| reformate | 98 | 12 | high-severity reformer endpoint of the 85–95+ range (G&H ch. 9) |
+| FCC gasoline | 93 | 35 | midpoint of 91–95 (G&H ch. 4) |
+| alkylate | 93 | 25 | midpoint of 90–98 (G&H ch. 7) |
+| FCC LCO | cetane 22 | — | LCO is a low-cetane blendstock; ≈ 20–25 (ICCT tutorial) |
+
+**Per-crude component qualities** (gasoline isomerate RON, jet freeze, SR
+diesel cetane) — PUBLISHED where the vendor sheets provide them, ASSUMED with
+rationale where not (`CRUDE_QUALITIES` in features/quality.py carries the
+status strings; provenance row 3):
+
+| Crude | Light-naphtha RON | Kero freeze °C | SR diesel cetane | Status |
+|---|---|---|---|---|
+| Bonny Light | 77.2 | −56 | 45.2 | PUBLISHED (TE 15-80 / 150-250 / 230-375 cuts) |
+| Forcados | 77.4 | −56 | 45.2 | PUBLISHED (same TE cuts) |
+| Qua Iboe | 78.0 (ASSUMED — XOM RON row unusable in extraction: MON > RON under every alignment) | −43 (mid of published kero-range) | 55.0 (mid of published 50–61) | mixed |
+| Alaska North Slope | 78.0 (ASSUMED, same XOM issue) | −50 (mid) | 50.0 (mid of 46–51) | mixed |
+| Thunder Horse | 78.0 (ASSUMED, same XOM issue) | −44 (mid) | 55.0 (mid of 53–61) | mixed |
+
+**Sensitivity note:** single-crude pools pass all four specs with wide margin
+except diesel cetane (LCO dilution) — the binding constraints in practice are
+RON and cetane at high severity (verified in `tests/test_quality.py` and the
+app's DE runs).
 
 | Product | Components |
 |---|---|
-| gasoline | SR naphtha (<180 °C) + FCC gasoline |
+| gasoline | isomerate (light naphtha < 80 °C, net of butane pull) + reformate (85 % of mid naphtha) + FCC gasoline + alkylate (50 % of FCC gas+coke) |
 | diesel | SR distillate (260–360 °C) + FCC LCO, less HT loss |
 | jet | SR kerosene (180–260 °C) |
-| petrochem | residue (>540 °C) + FCC slurry + FCC light-gas/coke (propylene/PGP proxy) |
+| petrochem | residue (>540 °C) + FCC slurry + non-alkylated FCC gas + reformer LPG + butane pull (LPG/propylene/PGP proxy) |
 
 Sums ≈ 1 per crude (≤ 1% HT loss); verified in tests (`test_bridge.py`).
 

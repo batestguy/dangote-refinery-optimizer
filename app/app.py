@@ -30,11 +30,14 @@ def _(np):
     from pathlib import Path
 
     import pandas as pd
+    from dotenv import dotenv_values
 
     from dangote_opt.config import CONFIG
     from dangote_opt.data.assays import frame_to_records
     from dangote_opt.data.costs import build_crude_costs, load_brent_reference
+    from dangote_opt.data.prices import product_prices, usgc_prices_frame
     from dangote_opt.features.bridge import yields_from_assay
+    from dangote_opt.features.quality import CRUDE_QUALITIES, blend_pool_qualities
     from dangote_opt.optimization.objective import RefineryObjective, simplex_repair
 
     # REAL slate — parsed published assays (docs/data_provenance.md row 3).
@@ -55,6 +58,27 @@ def _(np):
     costs_map = build_crude_costs([r.crude_id for r in records], brent_ref)
     COSTS = np.array([costs_map[r.crude_id] for r in records])
 
+    # REAL product prices — EIA USGC spot 12-mo averages (gasoline/diesel/jet);
+    # petrochem stays on the disclosed CONFIG placeholder. Falls back to the
+    # committed artifact when no key/cache is available.
+    try:
+        price_frame = usgc_prices_frame(dotenv_values(".env").get("EIA_API_KEY", "").strip() or "")
+        PRICES = product_prices(price_frame)
+    except Exception:  # noqa: BLE001 — offline fallback to the committed artifact
+        price_sidecar = json.loads(
+            Path("data/derived/prices_phase2.json").read_text(encoding="utf-8")
+        )
+        PRICES = price_sidecar["prices_usd_bbl"]
+    PRICE_VEC = np.array([PRICES[p] for p in CONFIG.products])
+
+    # REAL quality model — pool qualities from the bridge's component streams
+    # (features/quality.py); RON/RVP/freeze/cetane specs join the penalty block.
+    curves = [np.array(r.tbp_curve, dtype=float) for r in records]
+    crude_quals = [CRUDE_QUALITIES[r.crude_id] for r in records]
+
+    def quality_model(ratios, severity):
+        return blend_pool_qualities(ratios, curves, crude_quals, severity)
+
     def bridge_yields(ratios, severity):
         """Blend yield = crude-weighted mean of per-crude bridge yields."""
         ys = np.array(
@@ -69,10 +93,11 @@ def _(np):
         crude_apis=np.array([r.api for r in records]),
         crude_sulfurs=np.array([r.sulfur_pct for r in records]),
         crude_costs=COSTS,
-        product_prices=np.array([CONFIG.default_prices[p] for p in CONFIG.products]),
+        product_prices=PRICE_VEC,
         yield_model=bridge_yields,
+        quality_model=quality_model,
     )
-    return CONFIG, CRUDES, COSTS, objective, simplex_repair
+    return CONFIG, CRUDES, COSTS, PRICES, objective, quality_model, simplex_repair
 
 
 @app.cell
@@ -130,7 +155,7 @@ def _(
     status = "✅ feasible" if not violations else f"⚠️ {violations}"
     mo.md(
         f"""
-        ### Optimal crude diet (Stage-1 TBP bridge yields + real Brent-anchored costs)
+        ### Optimal crude diet (bridge yields · Brent costs · USGC prices · quality specs)
         | Crude | Blend share |
         |---|---|
         {rows}
@@ -153,10 +178,13 @@ def _(mo):
         **Transparency:** crude assays are real published data (TotalEnergies /
         ExxonMobil sheets — `docs/data_provenance.md` row 3); delivered costs are
         anchored to the real EIA Brent spot average plus documented **ASSUMED**
-        per-grade differentials (row 9) — refresh path: OPEC MOMR. Product prices
-        remain **placeholder** until the EIA USGC series is wired in; yields come
-        from the Stage-1 TBP cut-point bridge (`docs/methodology.md`). Methodology
-        demo on public data — not Dangote's actual operations (spec §7).
+        per-grade differentials (row 9, refresh: OPEC MOMR); gasoline/diesel/jet
+        prices are real EIA USGC spot averages (row 2) — the **petrochem pool
+        price is a disclosed PLACEHOLDER** (no citable spot series exists).
+        Yields come from the Stage-1 TBP bridge and quality specs (RON/RVP/freeze/
+        cetane) from `features/quality.py` — component values PUBLISHED where the
+        sheets provide them, **ASSUMED** otherwise (`docs/methodology.md` §3c).
+        Methodology demo on public data — not Dangote's actual operations (spec §7).
         """
     )
     return

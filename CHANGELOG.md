@@ -5,6 +5,24 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- Quality-spec constraint bundle (spec §4 decision 14 — Phase 2 deliverable):
+  `features/quality.py` computes gasoline RON (linear), RVP (psi^1.25 index,
+  Haverly), jet freeze point, and diesel cetane (linear) from the bridge's
+  component streams; enforced via `RefineryObjective.quality_model` (injectable,
+  same pattern as the Phase 3 ETR hook) with the linear+quadratic penalty.
+- Bridge octane units (methodology §3b): isomerization (light naphtha),
+  reforming (85% reformate, G&H ch. 9), alkylation (50% of FCC gas+coke), and
+  butane pull-off (25% of light naphtha → LPG for RVP control); `component_volumes()`
+  exposes the pre-pooling streams — one mass balance behind yields and quality
+  (mass-balance equivalence pinned in tests). Without these units no realistic
+  blend meets RON 91 (SR naphtha blends at RON ≈ 58).
+- Product-price anchor: `data/prices.py` wires the verified EIA USGC spot
+  series (gasoline EPMRU / ULSD EPD2DXL0 / jet EPJK, $/gal × 42 → $/bbl,
+  12-mo averages: $84.77 / $93.49 / $88.94) into the objective; petrochem pool
+  stays on a disclosed PLACEHOLDER (no citable EIA spot exists for the
+  LPG/propylene/residue basket — probed; refresh path documented).
+  Committed artifact `data/derived/prices_phase2.parquet` + sidecar
+  (`scripts/build_prices.py`). 20 new tests (102 total).
 - Cost anchor (provenance row 9 complete): `brent_spot` series live-verified
   and added to the EIA catalog (duoarea `ZEU` — Brent's only area on the spot
   route); `data/costs.py` models delivered cost = trailing-12m EIA Brent
