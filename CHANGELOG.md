@@ -8,8 +8,28 @@ All notable changes to this project. Format based on Keep a Changelog.
 - Colab driver notebook: consolidate cell definitions to satisfy marimo's
   single-definition rule (`MultipleDefinitionError` on `load_dataset`/`os`/
   `subprocess`) — caught by WSL headless test.
+- marimo app: the result cell nested its `mo.md()` inside `if run.value:` so
+  marimo rendered nothing after clicking Run (only a cell's last *top-level*
+  expression is displayed). Rewritten with `mo.stop()`; the severity slider,
+  previously unused, now sets the equal-weight baseline's severity (spec §3.4);
+  uplift guards against a zero baseline.
+- Colab driver: dropped the unconditional `pip install datasets` side effect;
+  `datasets` is now a declared project dependency (streaming use only); probe
+  cell now depends on the install cell so DAG order is guaranteed on Colab.
+- `.gitignore`: removed the blanket `*.parquet` rule that contradicted the
+  "commit small derived parquet" workflow (raw/processed dirs stay ignored).
+- Docs: spec §1 F2/F8 and §2.4 updated for the marimo decision and the verified
+  Electric Sheep schema; Phase 4 time compression recorded as open item 7;
+  problem statement baseline aligned to spec ("default severity"); setup-steps
+  step 6 marked done; data provenance clarifies CrudeOilMix's gap-filler role.
 
 ### Added
+- Objective: quadratic penalty for API-window / sulfur-cap violations
+  (`CONFIG.constraint_penalty`) — DE can no longer return an infeasible blend
+  that out-scores a feasible one; `margin()` exposes the unpenalized value the
+  app reports. Placeholder yield model is now blend-aware (API → light-product
+  yield, sulfur → distillate loss) so the POC has a real cost-vs-yield trade-off
+  instead of trivially buying the cheapest barrel. Tests cover both.
 - `scripts/colab-wsl-test.sh`: replicates the Colab free-tier workflow on
   Linux/WSL (clone → venv → editable install → sanity → headless marimo →
   pytest) using a standalone project-local uv; no sudo, no system changes.
@@ -18,8 +38,10 @@ All notable changes to this project. Format based on Keep a Changelog.
 
 ### Decided (documented)
 - Storage: project stays on `D:\Dangote` (external USB, benchmarked 2.6–8×
-  slower writes than C: SSD; reads equal; uv cache on C:). GitHub is the sole
-  git backup; D: reserved for write-once data archives. See `knowledge.md`.
+  slower writes than C: SSD; cold reads ~39 MB/s — an earlier "reads equal"
+  result was a RAM-cache artifact; uv cache on C:). GitHub is the sole git
+  backup. See `knowledge.md`.
+
 - Colab/Kaggle: optional convenience only (CPU-bound workloads run locally;
   free GPU quotas are useless to ETR). Driver remains Colab-ready.
 

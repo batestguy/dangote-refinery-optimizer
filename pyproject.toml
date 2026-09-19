@@ -19,6 +19,7 @@ dependencies = [
     "marimo>=0.12",  # floor only; Phase 6 pins the exact CVE-2026-39987-patched release (spec open item 5)
     "python-dotenv>=1.0",
     "requests>=2.31",
+    "datasets>=3.0",  # HF streaming only (CrudeOilMix, Electric Sheep) — never bulk-download
 ]
 
 [dependency-groups]

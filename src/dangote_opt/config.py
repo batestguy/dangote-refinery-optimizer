@@ -33,6 +33,13 @@ class ProjectConfig:
     api_blend_range: tuple[float, float] = (30.0, 45.0)  # Dangote-scale design window
     sulfur_blend_pct_max: float = 1.5
 
+    # Constraint handling in DE: simplex *repair* for Σx=1; linear+quadratic
+    # *penalty* (USD/bbl per unit of violation, °API or wt-% S) for the API window
+    # and sulfur cap. With the linear term, even a 0.01 wt-% sulfur overshoot costs
+    # ~$100/bbl — an order of magnitude above any realistic crude-cost spread or
+    # margin (~$5–20/bbl) — so DE cannot buy its way into infeasibility.
+    constraint_penalty: float = 10_000.0
+
     # DE budget (spec §3.7: deep re-opt, 30–60 s target on free tier)
     de_maxiter: int = 250
     de_popsize: int = 15

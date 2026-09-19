@@ -19,13 +19,13 @@ However, the review found **one structural flaw, three data gaps, and a set of p
 | # | Finding | Severity | Section |
 |---|---------|----------|---------|
 | F1 | **The assay→yield join does not exist.** Crude assays describe feed; unit yields come from process data (FCCU). These datasets share no key. The surrogate as briefed has no training signal for "blend → yields." | 🔴 Critical | §3.1 |
-| F2 | **Electric Sheep pricing dataset is ~27 rows / 3.6 kB.** It cannot anchor a 25-year economics layer as the brief implies. | 🔴 Critical | §3.2 |
+| F2 | **Electric Sheep pricing dataset is ~27 rows / 3.6 kB.** It cannot anchor the economics layer as the brief implies. *(Rev. 2026-09-18 after streaming probe: the 27 rows are an **annual 1999–2025 per-grade series** — the problem is annual granularity + synthetic labeling + **no product prices**, not the row count. Usable as a labeled-synthetic crude-cost anchor only.)* | 🔴 Critical | §3.2 |
 | F3 | **CrudeOilMix verified real** (1,141,933 simulator-generated blend samples from 9,061 real assays, CC-BY-4.0, parquet, 10M–100M rows category) — but it's a *NeurIPS benchmark* with multimodal structure; treat as dataset, not turnkey solution. | ✅ Resolved risk | §3.1 |
 | F4 | **No product quality specs** in the objective as briefed — a refinery planner without octane/sulfur caps looks naive to domain reviewers. | 🟠 Major | §3.3 |
 | F5 | **Baseline definition is vague** ("margin improvement over baseline") — the honest baseline is an LP optimum, not a strawman. | 🟠 Major | §3.4 |
 | F6 | Random k-fold CV on correlated blend samples inflates R²; a leave-crude-out protocol is needed for an honest generalization claim. | 🟠 Major | §3.5 |
 | F7 | "Optimal temperatures/catalyst ratios" with zero real unit data risks invented-precision criticism. Blend + one flagship severity variable was chosen instead. | 🟡 Moderate | §3.6 |
-| F8 | Streamlit Cloud 1 GB RAM + deep re-optimization UX (30–60 s runs) is workable but needs engineering discipline (caching, budgeted DE). | 🟡 Moderate | §3.7 |
+| F8 | Deep re-optimization UX (30–60 s runs) needs engineering discipline (caching, budgeted DE, instant pre-computed fallback). *(Rev.: originally framed around Streamlit Cloud's 1 GB RAM; now marimo on HF Spaces — RAM relaxes, cold-start/sleep becomes the constraint.)* | 🟡 Moderate | §3.7 |
 | F9 | Process gaps: repo visibility, CI depth, tooling, descope order, and phase-2 feedback loop were all undecided in the brief. | 🟡 Moderate | §4 |
 
 ---
@@ -35,7 +35,7 @@ However, the review found **one structural flaw, three data gaps, and a set of p
 1. **Problem formulation (brief §3).** Objective function, decision variables, and constraints are correctly structured for a refinery blending problem. Linear blending rules for API gravity and sulfur are the industry-standard approximation — appropriate here.
 2. **Scope guard.** 4 products × ~5 crudes × single period is the right size. The brief's own §10.2 "scope creep = highest project risk" is correct and this spec enforces it.
 3. **Methodology pairing.** ETR surrogate + SciPy differential evolution is a defensible, published pattern (cf. Umeozor 2026, *Applied ML Models to Oil Refinery Programming*; Mohd Fadzil et al. 2023, *Ind. Eng. Chem. Res.*; Saghir et al. 2024 on surrogate + evolutionary optimization). Replicating-then-extending a published method is exactly the right portfolio move.
-4. **Deployment realism.** Streamlit Community Cloud as primary, GitHub Actions for CI, HF Space for portfolio page is the correct free-tier stack in 2026. The brief's own comparison table (§7.1) is accurate.
+4. **Deployment realism.** GitHub Actions for CI + a free HF Space is the correct free-tier stack in 2026; the brief's comparison table (§7.1) is accurate. *(Rev.: the brief's Streamlit Community Cloud primary was replaced by a marimo app on HF Spaces — §3.7 — the free-tier principle is unchanged.)*
 5. **Transparency stance.** The brief's §10.3 framing ("methodology demo, synthetic data disclosed") is the correct legal and credibility posture and is strengthened in this spec.
 6. **Non-goals (brief §1.5).** Correctly excludes real-time trading, proprietary data, and Aspen-class simulation.
 
@@ -109,7 +109,7 @@ Interview answer: full bundle (octane, cetane, sulfur, freeze point, RVP). This 
 
 - Adds linear blending index (LBI) constraints for: gasoline RON (≥ 91/95 blend target), diesel sulfur (≤ 50 ppm blend), jet freeze point, diesel cetane index, gasoline RVP.
 - Implementation: properties blended via standard industry mixing rules (LBI for octane/cetane/RVP; linear for sulfur; linear-by-weight for freeze point proxy). Each rule cited in `docs/methodology.md`.
-- **Risk acknowledged:** this is the largest new modeling surface. Mitigation: specs enter as **constraints** (the optimizer must satisfy them), not as extra surrogate outputs — no new ML burden. Where a crude property is missing from a public assay (common), use the CrudeOilMix `wc_ent` modality or flag-and-impute with documented defaults.
+- **Risk acknowledged:** this is the largest new modeling surface. Mitigation: specs enter as **constraints** (the optimizer must satisfy them), not as extra surrogate outputs — no new ML burden. Where a crude property is missing from a public assay (common), use CrudeOilMix as the gap-filler (*rev.: assay detail is nested in its `mix_json` column — the flat modality names quoted from the dataset card, e.g. `wc_ent`, are not top-level columns; the Phase 1 schema mapper resolves this*) or flag-and-impute with documented defaults.
 
 ### 3.4 Baseline definition (F5) — decision: **both + random**
 
@@ -198,6 +198,8 @@ Deltas vs. brief §6 are marked. Order reflects new dependencies (bridge before 
 
 **Critical path:** Phase 2 (bridge) → Phase 3 (surrogate) → Phase 4 (optimization). Everything else can slip a week without moving the ship date.
 
+> **Known compression (rev.):** Phase 4 shrank from the brief's two weeks (7–8) to one week (8) *while gaining scope* (LP + random-search baselines, 3-way table, quality-spec penalties). If the bridge does not overrun, the week-12 buffer is pre-assigned to Phase 4 before anything else (see §8 item 7).
+
 **First two weeks of concrete actions (Phase 0):**
 1. `uv init`, pyproject with pinned deps, src layout (`src/{data,features,models,optimization,viz}`), pytest + ruff wired, GH Actions on push.
 2. Register EIA API key; store in `.env` (gitignored); `.env.example` committed.
@@ -243,6 +245,7 @@ Deltas vs. brief §6 are marked. Order reflects new dependencies (bridge before 
 4. Blog platform (brief leans Medium + personal site) — decide Phase 7.
 5. marimo release pin: verify CVE-2026-39987 fixed version at Phase 6 kickoff and record it in `pyproject.toml`.
 6. Whether the HF Space uses the free CPU basic (16 GB) or upgrades — revisit only if DE runs exceed the 30–60 s budget.
+7. Phase 4 is one week with more scope than the brief's two-week version (§5 note). Decide at Phase 3 exit whether the buffer week goes to Phase 4 or Phase 5's descope fallback (3-scenario mini) is triggered early.
 
 ---
 

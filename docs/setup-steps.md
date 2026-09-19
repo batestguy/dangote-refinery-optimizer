@@ -45,7 +45,7 @@
 3. Single initial commit: `chore: scaffold phase 0 — src layout, marimo app, tests, CI, docs`.
 **Accept:** `git status` clean after commit; no secrets staged.
 
-## Step 6 — GitHub repo (public, per spec decision 17) ⏳
+## Step 6 — GitHub repo (public, per spec decision 17) ✅ (2026-09-18: https://github.com/batestguy/dangote-refinery-optimizer)
 ```
 gh repo create dangote-refinery-optimizer --public --source . --push
 ```
@@ -53,12 +53,12 @@ gh repo create dangote-refinery-optimizer --public --source . --push
 - README carries a WIP banner + CI badge so day-1 visitors see intent, not incompleteness.
 **Accept:** `gh repo view` returns the repo; Actions tab shows the CI run passing on the first push.
 
-## Step 7 — CI on GitHub Actions (free for public repos) ✅ (workflow committed; run verifies after push)
+## Step 7 — CI on GitHub Actions (free for public repos) ✅ (green on `main` after first push)
 `.github/workflows/ci.yml`: checkout → setup-uv → Python 3.12 → `uv sync` → `ruff check` → `pytest`.
 **Accept:** green check on `main` head commit.
 
 ## Step 8 — Colab free-tier workflow (usable from Phase 1) ✅ (driver committed)
-Pattern: mount repo → `pip install -e .` (or `uv`-less plain pip) → run heavy data pulls in Colab → **commit only small derived parquet/CSV artifacts**, never raw dumps (repo stays light; raw data lives in Colab Drive or local `data/raw/`, which is gitignored).
+Pattern: mount repo → `pip install -e .` (or `uv`-less plain pip) → run heavy data pulls in Colab → **commit only small derived parquet/CSV artifacts under `data/derived/`**, never raw dumps (repo stays light; raw data lives in Colab Drive or local `data/raw/`, which is gitignored — `.gitignore` deliberately has *no* blanket `*.parquet` rule so derived slices can be tracked).
 The driver notebook also **streams** CrudeOilMix (HF datasets streaming) so we never download the full multi-GB benchmark.
 **Accept:** `notebooks/00_free_tier_driver.py` runs top-to-bottom on a free Colab CPU session (verify in Phase 1 kickoff).
 

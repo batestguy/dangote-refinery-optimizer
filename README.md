@@ -28,7 +28,7 @@ uv run ruff check .          # lint
 uv run marimo run app/app.py # the app, locally
 ```
 
-Free-tier workflows: heavy data pulls run on **Colab** (`notebooks/00_free_tier_driver.py`), the app deploys to an **HF Space** (Phase 6), CI is **GitHub Actions**.
+Free-tier workflows: heavy data pulls *can* run on **Colab** (`notebooks/00_free_tier_driver.py`; optional — CPU-bound work runs fine locally), the app deploys to an **HF Space** (Phase 6), CI is **GitHub Actions**.
 
 ## The problem in one line
 

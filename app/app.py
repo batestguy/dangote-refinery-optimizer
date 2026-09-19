@@ -40,52 +40,72 @@ def _(np):
 
 @app.cell
 def _(mo):
-    severity = mo.ui.slider(0.0, 1.0, value=0.5, step=0.01, label="FCC severity (proxy)")
-    run = mo.ui.run_button(label="⚡ Run deep optimization (~5–30 s)")
-    mo.vstack([severity, run])
-    return run, severity
+    # DE optimizes severity itself (spec §3.6); this slider sets the *baseline*
+    # severity for the equal-weight comparison (spec §3.4: "at default severity").
+    baseline_severity = mo.ui.slider(
+        0.0, 1.0, value=0.5, step=0.01, label="Baseline FCC severity (equal-weight comparison)"
+    )
+    run = mo.ui.run_button(label="⚡ Run deep optimization")
+    mo.vstack([baseline_severity, run])
+    return baseline_severity, run
 
 
 @app.cell
-def _(CONFIG, CRUDES, differential_evolution, mo, np, objective, run, severity, simplex_repair):
-    if run.value:
-        bounds = [(0.0, 1.0)] * CONFIG.n_crudes + [CONFIG.severity_bounds]
-        result = differential_evolution(
-            objective,
-            bounds,
-            maxiter=CONFIG.de_maxiter,
-            popsize=CONFIG.de_popsize,
-            seed=CONFIG.de_seed_baseline,
-            polish=False,
-            tol=1e-3,
-        )
-        x = simplex_repair(result.x[: CONFIG.n_crudes])
-        sev = float(np.clip(result.x[-1], *CONFIG.severity_bounds))
-        margin_de = -result.fun
-        x_eq = np.full(CONFIG.n_crudes, 1 / CONFIG.n_crudes)
-        margin_eq = -objective(np.r_[x_eq, sev])
+def _(
+    CONFIG,
+    CRUDES,
+    baseline_severity,
+    differential_evolution,
+    mo,
+    np,
+    objective,
+    run,
+    simplex_repair,
+):
+    # marimo renders only the last *top-level* expression of a cell — an output
+    # nested inside `if run.value:` is silently dropped. mo.stop() short-circuits
+    # with a message instead, and the result mo.md() is the final statement.
+    mo.stop(
+        not run.value,
+        mo.md("Set the baseline severity, then hit **Run** to optimize the blend."),
+    )
 
-        rows = "\n".join(
-            f"| {name} | {xi:.1%} |" for name, xi in zip(CRUDES, x, strict=True)
-        )
-        violations = objective.constraints_violated(x, sev)
-        status = "✅ feasible" if not violations else f"⚠️ {violations}"
-        mo.md(
-            f"""
-            ### Optimal crude diet (placeholder model — demo only)
-            | Crude | Blend share |
-            |---|---|
-            {rows}
+    bounds = [(0.0, 1.0)] * CONFIG.n_crudes + [CONFIG.severity_bounds]
+    result = differential_evolution(
+        objective,
+        bounds,
+        maxiter=CONFIG.de_maxiter,
+        popsize=CONFIG.de_popsize,
+        seed=CONFIG.de_seed_baseline,
+        polish=False,
+        tol=1e-3,
+    )
+    x = simplex_repair(result.x[: CONFIG.n_crudes])
+    sev = float(np.clip(result.x[-1], *CONFIG.severity_bounds))
+    # Report the *unpenalized* margin; feasibility is shown separately below.
+    margin_de = objective.margin(x, sev)
+    x_eq = np.full(CONFIG.n_crudes, 1 / CONFIG.n_crudes)
+    margin_eq = objective.margin(x_eq, baseline_severity.value)
+    uplift = (margin_de - margin_eq) / abs(margin_eq) if margin_eq else float("nan")
 
-            **FCC severity:** {sev:.2f} · **Blend margin (DE):** ${margin_de:,.2f}/bbl
-            · **Equal-weight baseline:** ${margin_eq:,.2f}/bbl
-            · **Uplift:** {(margin_de - margin_eq) / abs(margin_eq):+.1%}
-            · **Constraints:** {status}
-            """
-        )
-    else:
-        mo.md("Adjust the severity slider, then hit **Run** to optimize the blend.")
-    return (x_eq,)
+    rows = "\n".join(f"| {name} | {xi:.1%} |" for name, xi in zip(CRUDES, x, strict=True))
+    violations = objective.constraints_violated(x, sev)
+    status = "✅ feasible" if not violations else f"⚠️ {violations}"
+    mo.md(
+        f"""
+        ### Optimal crude diet (placeholder model — demo only)
+        | Crude | Blend share |
+        |---|---|
+        {rows}
+
+        **FCC severity (DE):** {sev:.2f} · **Blend margin (DE):** ${margin_de:,.2f}/bbl
+        · **Equal-weight baseline** (severity {baseline_severity.value:.2f}):
+        ${margin_eq:,.2f}/bbl
+        · **Uplift:** {uplift:+.1%}
+        · **Constraints:** {status}
+        """
+    )
+    return
 
 
 @app.cell

@@ -44,16 +44,14 @@ def _():
     IN_COLAB = "google.colab" in sys.modules or bool(os.environ.get("COLAB_RELEASE_TAG"))
     REPO_URL = "https://github.com/batestguy/dangote-refinery-optimizer.git"
 
+    # Only Colab gets a clone + install. Locally, `uv sync` already provides every
+    # dependency (incl. `datasets`, declared in pyproject) — no pip side effects.
     if IN_COLAB and not Path("dangote-refinery-optimizer").exists():
         subprocess.run(["git", "clone", "--depth", "1", REPO_URL], check=True)
         os.chdir("dangote-refinery-optimizer")
     if IN_COLAB:
         subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-e", "."], check=True)
-    try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "datasets"], check=False)
-    except Exception:  # noqa: BLE001 — preinstalled on real Colab
-        pass
-    return (IN_COLAB,)
+    return IN_COLAB, os
 
 
 @app.cell
@@ -72,14 +70,16 @@ def _(IN_COLAB, mo, os):
 
 
 @app.cell
-def _(mo):
+def _(IN_COLAB, mo):
+    # Depends on IN_COLAB so marimo's DAG runs the clone/install cell *before* this
+    # one on Colab (source order alone does not guarantee execution order).
     # Single cell for both dataset probes: `load_dataset` is defined exactly once
     # (marimo forbids redefining a name across cells). Failure of one probe must
-    # not crash the other. `datasets` install happens in the env cell above.
-    out = []
-    try:
-        from datasets import load_dataset
+    # not crash the other. `datasets` is a hard project dependency (pyproject).
+    from datasets import load_dataset
 
+    out = [f"Environment: {'Colab' if IN_COLAB else 'local (uv)'}"]
+    try:
         ds = load_dataset("anon12-neurips-2026/CrudeOilMix", split="train", streaming=True)
         rows = list(ds.take(3))
         cols = list(rows[0].keys()) if rows else []
@@ -90,9 +90,7 @@ def _(mo):
         out.append(f"⚠️ CrudeOilMix streaming probe failed: `{e!r}`")
 
     try:
-        from datasets import load_dataset as _ld  # same cell, alias is fine
-
-        es = _ld(
+        es = load_dataset(
             "electricsheepafrica/africa-synth-energy-oilgas-crude-pricing-nigeria",
             split="train",
             streaming=True,

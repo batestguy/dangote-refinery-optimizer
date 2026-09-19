@@ -17,10 +17,10 @@ venv/
 # Local Colab/WSL test scratch (standalone uv, venvs, caches)
 .colab-test/
 
-# Data — raw/processed never committed (see docs/setup-steps.md step 8)
+# Data — raw/processed never committed (see docs/setup-steps.md step 8).
+# Small *derived* artifacts (data/derived/) ARE committed, so no blanket *.parquet rule.
 data/raw/
 data/processed/
-*.parquet
 
 # Trained artifacts
 models/*.pkl
