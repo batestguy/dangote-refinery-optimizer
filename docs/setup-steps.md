@@ -84,6 +84,18 @@ run probe cells as a script to test connectivity.
 **Accept:** `pytest` green offline (57 tests); live verification is the remaining
 Phase 1 exit criterion for the EIA row.
 
+## Step 8c — Five-crude slate (2026-09-19) ✅ (Phase 1 exit criterion)
+- Vendor PDFs downloaded to `data/raw/assays/` (gitignored): Bonny Light +
+  Forcados (TotalEnergies), Qua Iboe + Alaska North Slope + Thunder Horse
+  (ExxonMobil).
+- `src/dangote_opt/data/assay_parsers.py`: format-specific parsers →
+  `AssayRecord`s (whole-crude API/sulfur + TBP curve, yield basis labeled).
+- `scripts/build_slate.py` → `data/derived/slate_phase1.parquet` + sidecar
+  (committed); all records pass `validate_slate()`.
+- Arab Light/Urals substituted (no open assays) — documented in provenance row 3.
+**Accept:** committed slate parquet validates; spot-checked API/S match vendor
+sheets; CI green.
+
 ## Step 9 — Deployment path (Phase 6, not now)
 1. Fork `huggingface.co/spaces/marimo-team/marimo-app-template` → new Space.
 2. Copy `app/app.py` → `app.py` in the Space; list deps in Space `requirements.txt` (pinned versions from `uv.lock`).

@@ -1,0 +1,49 @@
+{
+  "artifact": "data\\derived\\slate_phase1.parquet",
+  "generated": "2026-09-19",
+  "n_crudes": 5,
+  "sources": [
+    {
+      "crude_id": "bonny_light",
+      "source": "TotalEnergies crude oil data sheet",
+      "url": "https://trading.totalenergies.com/wp-content/uploads/2025/11/BONNY-LIGHT.pdf",
+      "pulled": "2026-09-19",
+      "notes": "assay date 18-Jun-20; TBP yield basis: wt%"
+    },
+    {
+      "crude_id": "forcados",
+      "source": "TotalEnergies crude oil data sheet",
+      "url": "https://trading.totalenergies.com/wp-content/uploads/2025/11/FORCADOS.pdf",
+      "pulled": "2026-09-19",
+      "notes": "assay date 01-Mar-14; TBP yield basis: wt%"
+    },
+    {
+      "crude_id": "qua_iboe",
+      "source": "ExxonMobil Crude Summary Report",
+      "url": "https://corporate.exxonmobil.com/-/media/global/files/crude-oils/pdf/2024/qua_iboe.pdf",
+      "pulled": "2026-09-19",
+      "notes": "reference QUAIB24Y; assay date 1/19/2024; TBP yield basis: vol% (10 \u00b0C cumulative grid)"
+    },
+    {
+      "crude_id": "alaska_north_slope",
+      "source": "ExxonMobil Crude Summary Report",
+      "url": "https://corporate.exxonmobil.com/-/media/global/files/crude-oils/pdf/alaska_north_slope.pdf",
+      "pulled": "2026-09-19",
+      "notes": "reference ANS25Y; assay date 11/21/2025; TBP yield basis: vol% (10 \u00b0C cumulative grid)"
+    },
+    {
+      "crude_id": "thunder_horse",
+      "source": "ExxonMobil Crude Summary Report",
+      "url": "https://corporate.exxonmobil.com/-/media/global/files/crude-oils/pdf/thunder_horse.pdf",
+      "pulled": "2026-09-19",
+      "notes": "reference THUN225Y; assay date 11/21/2025; TBP yield basis: vol% (10 \u00b0C cumulative grid)"
+    }
+  ],
+  "pdfs": [
+    "BONNY-LIGHT.pdf",
+    "FORCADOS.pdf",
+    "QUA-IBOE.pdf",
+    "ALASKA-NORTH-SLOPE.pdf",
+    "THUNDER-HORSE.pdf"
+  ]
+}

@@ -20,6 +20,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "requests>=2.31",
     "datasets>=3.0",  # HF streaming only (CrudeOilMix, Electric Sheep) — never bulk-download
+    "pdfplumber>=0.11.10",
 ]
 
 [dependency-groups]

@@ -73,6 +73,14 @@ class AssayRecord:
             raise AssayValidationError(
                 f"{self.crude_id}: TBP yields must be in {YIELD_RANGE} %, got {pcts}"
             )
+        # A cumulative distillation curve cannot decrease with temperature
+        # (0.1 %-point tolerance for rounding in published tables).
+        pairs = list(zip(self.tbp_curve, self.tbp_curve[1:], strict=False))
+        dips = [(t1, y1, y2) for (t1, y1), (t2, y2) in pairs if y2 < y1 - 0.1]
+        if dips:
+            raise AssayValidationError(
+                f"{self.crude_id}: TBP yield decreases with temperature at {dips[:3]}"
+            )
         if not self.source or not self.source_url or not self.pulled:
             raise AssayValidationError(
                 f"{self.crude_id}: provenance (source, source_url, pulled) is required"

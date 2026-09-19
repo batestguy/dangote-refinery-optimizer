@@ -17,6 +17,14 @@ All notable changes to this project. Format based on Keep a Changelog.
   key matching, explicit unmapped-key surfacing, reject tracking, whole-crude
   streaming filter (no bulk download).
 - 35 new offline tests (57 total).
+- Five-crude slate finalized from published assays (provenance row 3, spec §8
+  item 1): Bonny Light, Forcados (TotalEnergies sheets), Qua Iboe, Alaska North
+  Slope, Thunder Horse (ExxonMobil reports). Arab Light/Urals substituted — no
+  open TBP assays published. Parsers (`data/assay_parsers.py`) extract
+  whole-crude properties + TBP curves with per-crude yield-basis labels;
+  cumulative-yield monotonicity added to assay validation. Committed artifact:
+  `data/derived/slate_phase1.parquet` + provenance sidecar
+  (`scripts/build_slate.py`); PDFs stay in gitignored `data/raw/assays/`.
 - EIA catalog live-verified (2026-09-19, key registered): USGC product spot
   prices (gasoline/ULSD/jet, $/gal), US refinery net crude input (area `NUS` —
   `NUS-Z00` has no `YIR` rows), and Nigerian crude imports (`NUS-NNI`); first
