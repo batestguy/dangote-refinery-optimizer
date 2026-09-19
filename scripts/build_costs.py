@@ -31,7 +31,8 @@ def main() -> int:
     key = dotenv_values(".env").get("EIA_API_KEY", "").strip() or None
     brent_ref, window = load_brent_reference(months=DEFAULT_COST_WINDOW_MONTHS, api_key=key)
     frame = costs_frame(brent_ref)
-    costs = build_crude_costs(list(frame["crude_id"]), brent_ref)
+    # Sanity: the mapping helper must cover every grade in the frame (raises if not).
+    build_crude_costs(list(frame["crude_id"]), brent_ref)
 
     DERIVED_DIR.mkdir(parents=True, exist_ok=True)
     frame.to_parquet(DERIVED_DIR / "costs_phase2.parquet", index=False)
