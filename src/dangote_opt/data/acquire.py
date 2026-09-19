@@ -59,35 +59,52 @@ class EiaSeries:
     notes: str = ""
 
 
-# Series catalog — every entry's route/params get verified by the first real pull
-# and recorded in docs/data_provenance.md row 2 (series IDs + pull dates).
+# Series catalog — all routes/facets VERIFIED LIVE 2026-09-19 (see
+# docs/data_provenance.md row 2 for pull dates and the smoke script output).
 CATALOG: dict[str, EiaSeries] = {
-    # US product spot/regional prices by PAD district & product (company-level
-    # prices survey). Values arrive in $/gal — conversion to $/bbl is a documented
-    # Phase 2 transform, never done silently at acquisition.
+    # US Gulf Coast product spot prices (PADD 3 — closest free analog to the
+    # export-market pricing a Dangote-scale refinery sees). $/gal; convert to
+    # $/bbl (×42) as a documented Phase 2 transform, never at acquisition.
+    # Same route also carries WTI/Brent crude spots ($/bbl: EPCWTI/EPCBRENT).
     "us_product_prices": EiaSeries(
         key="us_product_prices",
-        route="petroleum/cons/psump",
-        data_columns=("value", "units"),
+        route="petroleum/pri/spt",
+        data_columns=("value",),
         frequency="monthly",
-        notes="PAD-district product prices ($/gal); facets product/process/duoarea",
+        facets={
+            "product": ("EPMRU", "EPD2DXL0", "EPJK"),  # gasoline / ULSD / jet
+            "duoarea": ("RGC",),  # U.S. Gulf Coast
+            "process": ("PF4",),  # Spot Price FOB
+        },
+        notes="Verified 2026-09-19: USGC spot $/gal (EER_EPMRU/EPD2DXL0/EPJK_PF4_RGC_DPG)",
     ),
-    # Refinery utilization / operable capacity inputs (utilization = inputs/capacity).
+    # Refinery utilization inputs: utilization = net crude input / operable
+    # capacity (capacity itself comes from a separate capacity series/route).
     "us_refinery_inputs": EiaSeries(
         key="us_refinery_inputs",
-        route="petroleum/sum/tusandm",
-        data_columns=("value", "units"),
+        route="petroleum/sum/snd",
+        data_columns=("value",),
         frequency="monthly",
-        notes="Utilization inputs: refinery & blender inputs (thousand bbl/d)",
+        facets={
+            "product": ("EPC0",),  # Crude Oil
+            "process": ("YIR",),  # Refinery and Blender Net Input
+            "duoarea": ("NUS",),  # U.S. total (NUS-Z00 has no YIR rows — verified)
+        },
+        notes="Verified 2026-09-19: US refinery net crude input (thousand bbl; MCRRIP*)",
     ),
-    # Crude imports by country of origin — delivered-slate cost texture for the
-    # Nigerian slate (volumes by grade/country, complements provenance row 9).
+    # Crude imports by country of origin — Nigerian volumes (NUS-NNI) anchor the
+    # delivered-slate cost texture alongside provenance row 9 (Bonny Light spot).
     "us_crude_imports": EiaSeries(
         key="us_crude_imports",
         route="petroleum/move/impcus",
-        data_columns=("value", "units"),
+        data_columns=("value",),
         frequency="monthly",
-        notes="Crude imports by country (thousand bbl/d); facets originCountry",
+        facets={
+            "product": ("EPC0",),  # Crude Oil
+            "process": ("IM0",),  # Imports
+            "duoarea": ("NUS-NNI",),  # Nigeria (drop this facet for all origins)
+        },
+        notes="Verified 2026-09-19: US crude imports from Nigeria (thousand bbl/d)",
     ),
 }
 

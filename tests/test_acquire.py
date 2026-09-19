@@ -60,14 +60,14 @@ def make_transport(
 SERIES = EiaSeries(
     key="test_series",
     route="petroleum/cons/test",
-    data_columns=("value", "units"),
+    data_columns=("value",),
     frequency="monthly",
     facets={"duoarea": ("R1",)},
 )
 
 
 def row(period: str, value: str) -> dict[str, Any]:
-    return {"period": period, "duoarea": "R1", "value": value, "units": "$/gal"}
+    return {"period": period, "duoarea": "R1", "value": value}
 
 
 def test_paginates_and_coerces_string_values(tmp_path):
@@ -79,7 +79,7 @@ def test_paginates_and_coerces_string_values(tmp_path):
     assert df["value"].dtype == "float64"
     assert df["value"].tolist() == [2.50, 2.60, 2.70]
     assert list(df["period"]) == ["2024-01", "2024-02", "2024-03"]
-    assert df["units"].tolist() == ["$/gal"] * 3  # units descriptor stays string
+    assert df["duoarea"].tolist() == ["R1"] * 3  # echoed facet column survives
     df = fetch_eia_series(SERIES, "KEY", start="2024-01", end="2024-03",
                           cache_dir=tmp_path, transport=transport)
     assert len(df) == 3
@@ -187,9 +187,14 @@ def test_facets_reach_request_url(tmp_path):
     assert "/data" in capture[0]["url"]
 
 
-def test_catalog_covers_phase1_needs():
-    assert {"us_product_prices", "us_refinery_inputs", "us_crude_imports"} <= set(CATALOG)
+def test_catalog_series_are_pinned_to_verified_routes():
+    """Catalog routes/facets were verified live 2026-09-19 — lock them."""
+    routes = {s.key: s.route for s in CATALOG.values()}
+    assert routes == {
+        "us_product_prices": "petroleum/pri/spt",
+        "us_refinery_inputs": "petroleum/sum/snd",
+        "us_crude_imports": "petroleum/move/impcus",
+    }
     for s in CATALOG.values():
-        assert s.route and s.data_columns and s.key == next(
-            k for k, v in CATALOG.items() if v is s
-        )
+        assert s.data_columns == ("value",)  # units is NOT a valid data column
+        assert s.facets  # every live pull must be facet-narrowed

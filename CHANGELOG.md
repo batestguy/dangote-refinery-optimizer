@@ -17,6 +17,13 @@ All notable changes to this project. Format based on Keep a Changelog.
   key matching, explicit unmapped-key surfacing, reject tracking, whole-crude
   streaming filter (no bulk download).
 - 35 new offline tests (57 total).
+- EIA catalog live-verified (2026-09-19, key registered): USGC product spot
+  prices (gasoline/ULSD/jet, $/gal), US refinery net crude input (area `NUS` —
+  `NUS-Z00` has no `YIR` rows), and Nigerian crude imports (`NUS-NNI`); first
+  cached parquet + provenance sidecars under `data/raw/eia/`.
+- SECURITY: user initially pasted the real EIA key into the committed
+  `.env.example`; moved to gitignored `.env`, template restored before staging —
+  the key was never committed or pushed.
 
 ### Fixed
 - Colab driver notebook: consolidate cell definitions to satisfy marimo's
