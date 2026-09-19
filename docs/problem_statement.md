@@ -36,9 +36,7 @@ Constraint handling in DE (implemented in `src/dangote_opt/optimization/objectiv
 
 `yieldᵢ(x, s)` is produced by a two-stage bridge (spec §3.1):
 1. **Stage 1 (Phase 2 — implemented):** TBP cut-point mass balance + cited FCC conversion/product-split ranges → per-crude yield vectors; every constant documented in `docs/methodology.md` and validated against published Bonny Light cut yields (±0.2 vol%).
-2. **Stage 2 (Phase 3):** ETR surrogate learns yield response over (blend-weighted properties, severity), calibrated in shape against FCCU operational data. Validated with **dual CV**: random 5-fold (headline) **and** leave-crude-out GroupKFold (honesty metric) — both reported, never one alone.
-
-Until Phase 3, a documented *blend-aware* placeholder keeps the optimizer and app testable: lighter blends yield more gasoline/distillate and less residue, sulfur costs a little distillate, severity converts VGO into gasoline. Magnitudes are illustrative; only the directions are asserted in tests.
+2. **Stage 2 (Phase 3 — implemented):** ETR surrogate learns the Stage-1 bridge over (blend-weighted properties + blend-weighted TBP cuts, severity); trained on bridge-generated labels. Validated with **dual CV**: random 5-fold (headline, min R² = 0.982) **and** leave-crude-out GroupKFold (honesty metric — jet-crude fold quantifies the extrapolation limit, see `models/model_card.md`) — both reported, never one alone. The planned FCCU-severity-shape calibration was dropped: the MIT ML-PSE FCCU dataset is fault-detection data with no severity sweep (provenance row 7).
 
 ## 4. Baseline contract (locked, spec §3.4)
 

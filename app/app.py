@@ -36,7 +36,7 @@ def _(np):
     from dangote_opt.data.assays import frame_to_records
     from dangote_opt.data.costs import build_crude_costs, load_brent_reference
     from dangote_opt.data.prices import product_prices, usgc_prices_frame
-    from dangote_opt.features.bridge import yields_from_assay
+    from dangote_opt.features.bridge import tbp_cut_fractions, yields_from_assay
     from dangote_opt.features.quality import CRUDE_QUALITIES, blend_pool_qualities
     from dangote_opt.optimization.objective import RefineryObjective, simplex_repair
 
@@ -89,15 +89,45 @@ def _(np):
         )
         return ratios @ ys
 
+    # Phase 3 surrogate when trained (scripts/train_surrogate.py) — it learns
+    # the bridge and reproduces it to <0.1% inside the envelope (model card).
+    # The bridge remains the source of truth and the fallback. The quality
+    # model stays bridge-exact (cheap; surrogate ≈ bridge anyway).
+    surrogate_pkl = Path("models/etr_surrogate.pkl")
+    if surrogate_pkl.exists():
+        from dangote_opt.models.train_surrogate import SurrogateYieldModel, load_surrogate
+
+        bundle = load_surrogate(surrogate_pkl)
+        YIELD_MODEL = SurrogateYieldModel(
+            bundle["model"],
+            np.array([r.api for r in records]),
+            np.array([r.sulfur_pct for r in records]),
+            np.array([tbp_cut_fractions(np.array(r.tbp_curve, dtype=float)) for r in records]),
+            severity_range=tuple(bundle["card"]["severity_training_range"]),
+        )
+        SURROGATE_INFO = bundle["card"]
+    else:
+        YIELD_MODEL = bridge_yields
+        SURROGATE_INFO = None
+
     objective = RefineryObjective(
         crude_apis=np.array([r.api for r in records]),
         crude_sulfurs=np.array([r.sulfur_pct for r in records]),
         crude_costs=COSTS,
         product_prices=PRICE_VEC,
-        yield_model=bridge_yields,
+        yield_model=YIELD_MODEL,
         quality_model=quality_model,
     )
-    return CONFIG, CRUDES, COSTS, PRICES, objective, quality_model, simplex_repair
+    return (
+        CONFIG,
+        CRUDES,
+        COSTS,
+        PRICES,
+        SURROGATE_INFO,
+        objective,
+        quality_model,
+        simplex_repair,
+    )
 
 
 @app.cell
@@ -116,6 +146,7 @@ def _(mo):
 def _(
     CONFIG,
     CRUDES,
+    SURROGATE_INFO,
     baseline_severity,
     differential_evolution,
     mo,
@@ -153,6 +184,18 @@ def _(
     rows = "\n".join(f"| {name} | {xi:.1%} |" for name, xi in zip(CRUDES, x, strict=True))
     violations = objective.constraints_violated(x, sev)
     status = "✅ feasible" if not violations else f"⚠️ {violations}"
+    if SURROGATE_INFO is not None:
+        min_r2 = min(m["r2"] for m in SURROGATE_INFO["cv_random_5fold"].values())
+        model_note = (
+            f"**Yield model:** ETR surrogate (Phase 3) — labels are the cited "
+            f"Stage-1 bridge; random 5-fold R² ≥ {min_r2:.3f}, leave-crude-out "
+            f"reported in `models/model_card.md`."
+        )
+    else:
+        model_note = (
+            "**Yield model:** Stage-1 TBP bridge directly "
+            "(train the surrogate with `scripts/train_surrogate.py`)."
+        )
     mo.md(
         f"""
         ### Optimal crude diet (bridge yields · Brent costs · USGC prices · quality specs)
@@ -165,6 +208,8 @@ def _(
         ${margin_eq:,.2f}/bbl
         · **Uplift:** {uplift:+.1%}
         · **Constraints:** {status}
+
+        {model_note}
         """
     )
     return

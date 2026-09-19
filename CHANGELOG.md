@@ -5,6 +5,23 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Phase 3 ETR surrogate** (`models/dataset.py`, `models/train_surrogate.py`,
+  `scripts/train_surrogate.py`): Extremely Randomized Trees trained on
+  bridge-generated labels (4,000 Dirichlet-sampled blends × severity, seed
+  20260919) behind the existing `YieldModel`/`quality_model` hooks — one
+  mass balance, two engines. Dual-CV protocol per spec §3.5: random 5-fold
+  (headline) min R² = 0.982 (impressive gate >0.90 passed) + leave-crude-out
+  GroupKFold (honesty) — the jet LCO collapse (R² ≈ 0.11) is quantified and
+  explained in the committed `models/model_card.md` (tree ensembles cannot
+  extrapolate below the held-out crude's range). Surrogate fidelity inside the
+  envelope: max |Δyield| ≈ 0.0007 vs bridge; DE optimum unchanged. Model size
+  capped at 21.3 MB (150×14×4 sweep; 300 trees = 96.5 MB violated the 50 MB
+  hosting guard). pkl is gitignored and regenerates deterministically in ~5 s;
+  app loads it with bridge fallback, permutation importance in the card.
+- FCCU calibration finding (provenance row 7): the planned yield-vs-severity
+  calibration against the MIT ML-PSE FCCU dataset was probed and **dropped** —
+  it is fault-detection data (NOC envelope + equipment faults, no severity
+  sweep), so the surrogate inherits the bridge's cited G&H severity shape.
 - Quality-spec constraint bundle (spec §4 decision 14 — Phase 2 deliverable):
   `features/quality.py` computes gasoline RON (linear), RVP (psi^1.25 index,
   Haverly), jet freeze point, and diesel cetane (linear) from the bridge's

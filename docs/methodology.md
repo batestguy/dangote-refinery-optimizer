@@ -154,7 +154,51 @@ sheets. Pinned in `tests/test_bridge.py`.
 4. **Jet pool has no severity response** (kero is straight-run only); some
    refineries crack into the kero range at low severity.
 
-## 7. References
+## 7. Surrogate (Phase 3) — ETR over bridge-generated labels
+
+Implemented in `models/dataset.py` + `models/train_surrogate.py`; numbers below
+are from the committed `models/model_card.md` (regenerate with
+`scripts/train_surrogate.py` — fully deterministic, seeded sampling + forest).
+
+**Design:** the surrogate learns the Stage-1 bridge (problem statement §3
+Stage 2), it does not replace its physics. Features are the blend-weighted
+properties + the blend-weighted TBP cut fractions (the bridge's actual inputs);
+labels are bridge yields. 4,000 rows sampled Dirichlet(α=0.55) on the simplex ×
+U(0,1) severity (seed 20260919). ExtraTreesRegressor, 150 trees × depth 14 ×
+leaf 4 (size/accuracy sweep: 300 trees → 96.5 MB pkl, violating the 50 MB
+hosting guard, at equal CV accuracy).
+
+**Dual CV results (both protocols, always — spec §3.5):**
+
+| Target | Random 5-fold R² | Leave-crude-out R² |
+|---|---|---|
+| gasoline | 0.9893 | 0.9347 |
+| diesel | 0.9972 | 0.7805 |
+| jet | 0.9820 | 0.1139 |
+| petrochem | 0.9979 | 0.9691 |
+
+**Gates (problem statement §5):** random-5-fold min R² = 0.982 → **impressive
+gate passed** (>0.90); LCO reported alongside. **The jet LCO result is the
+honesty finding:** the fold holding out the extreme-kero crude (ANS, 12.6 %
+kero cut) tests rows below the training range, and tree ensembles cannot
+extrapolate — quantified and explained in the model card. Deployment never
+requires unseen-crude extrapolation (DE operates inside the committed slate).
+
+**Fidelity inside the envelope:** surrogate vs bridge on arbitrary blends:
+max |Δyield| ≈ 0.0007 (0.07 vol%); the DE optimum is unchanged (same blend,
+margin within $0.2/bbl of the bridge-based run).
+
+**FCCU calibration note (supersedes the row-7 plan):** the planned
+severity-shape calibration against operational FCCU data was probed and
+dropped — the ML-PSE FCCU dataset (MIT; 7 CSVs × 47 signals from the
+Santander/McFarlane Simulink model) is a *fault-detection* set: normal
+operation + equipment faults with controllers active, **no severity sweep**,
+so it carries no yield-vs-severity information beyond what the cited Gary &
+Handwerk window already provides (§2). The surrogate therefore inherits the
+bridge's cited shape; spec §3.6's "no plant data is claimed" stance is
+preserved.
+
+## 8. References
 
 - Gary, J.H., Handwerk, G.E., Kaiser, M.J. — *Petroleum Refining: Technology
   and Economics*, 5th ed., CRC Press (2007): FCC conversion/yield ranges,
@@ -168,3 +212,6 @@ sheets. Pinned in `tests/test_bridge.py`.
   coefficient tables not openly reproducible → not used (see §6.1).
 - TotalEnergies / ExxonMobil published crude assays (provenance row 3) —
   TBP curves, whole-crude properties, and the ground-truth cut tables in §5.
+- ML-PSE (MIT) FCCU dataset — https://github.com/ML-PSE/FluidCat-FDD-SimData
+  (Santander & McFarlane Simulink model): probed for surrogate calibration and
+  rejected — fault-detection data, no severity sweep (see §7).
