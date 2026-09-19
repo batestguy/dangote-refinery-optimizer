@@ -72,6 +72,18 @@ labeled-synthetic crude-cost anchor; product prices still come from EIA. Note:
 `marimo export script` validates structure but does not execute network probes —
 run probe cells as a script to test connectivity.
 
+## Step 8b — Phase 1 data layer (2026-09-19) ✅ (code + offline tests; live pulls pending EIA key)
+- `src/dangote_opt/data/acquire.py`: EIA v2 client — cache-first parquet under
+  `data/raw/eia/`, provenance sidecars, pagination guard, fake-transport tests.
+- `src/dangote_opt/data/assays.py`: validated assay records (provenance-doc
+  quality rules enforced at construction) + 5-crude slate validation.
+- `src/dangote_opt/data/crudeoilmix.py`: `mix_json` mapper (tolerant key
+  matching, reject tracking) + whole-crude streaming (no bulk download).
+- `scripts/eia_smoke.py`: tiny live pull per catalog series once `EIA_API_KEY`
+  is in `.env` — run it, then pin verified series IDs in `docs/data_provenance.md`.
+**Accept:** `pytest` green offline (57 tests); live verification is the remaining
+Phase 1 exit criterion for the EIA row.
+
 ## Step 9 — Deployment path (Phase 6, not now)
 1. Fork `huggingface.co/spaces/marimo-team/marimo-app-template` → new Space.
 2. Copy `app/app.py` → `app.py` in the Space; list deps in Space `requirements.txt` (pinned versions from `uv.lock`).

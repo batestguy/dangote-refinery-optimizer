@@ -4,6 +4,20 @@ All notable changes to this project. Format based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+- Phase 1 data layer: EIA Open Data v2 client (`data/acquire.py`) with
+  cache-first parquet + provenance sidecars (key never persisted), page
+  pagination with a hard stop, injectable transport for offline tests, and a
+  candidate series catalog (`psump`, `tusandm`, `impcus` — verify live once the
+  key lands, via `scripts/eia_smoke.py`).
+- Assay record schema (`data/assays.py`): provenance-required records enforcing
+  the data-provenance quality rules (API 10–50, sulfur 0–5 wt-%, TBP strictly
+  increasing 0–100 %) at construction; slate validation (unique ids, exactly 5).
+- CrudeOilMix `mix_json` mapper (`data/crudeoilmix.py`): tolerant word-segment
+  key matching, explicit unmapped-key surfacing, reject tracking, whole-crude
+  streaming filter (no bulk download).
+- 35 new offline tests (57 total).
+
 ### Fixed
 - Colab driver notebook: consolidate cell definitions to satisfy marimo's
   single-definition rule (`MultipleDefinitionError` on `load_dataset`/`os`/
