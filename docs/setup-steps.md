@@ -112,3 +112,141 @@ sheets; CI green.
 | EIA API | Free key | 5,000 req/h (cache to parquet) |
 | HF datasets streaming | Free | no bulk download needed for probe |
 | open.er-api.com FX | Free | fair use; cache 1 h |
+
+---
+
+# Phase 2–5 execution record (2026-09-19 sessions)
+
+Continuation of the Phase 0 record above. Each section = one merged phase with
+its acceptance criteria and the honest findings encountered.
+
+## Step 10 — Phase 1: data layer live ✅ (2026-09-19)
+- EIA key registered → `.env` (gitignored); `scripts/eia_smoke.py` green.
+- Catalog pinned live (provenance row 2): `petroleum/pri/spt` USGC spot
+  (EPMRU/EPD2DXL0/EPJK), `petroleum/sum/snd` refinery inputs, `petroleum/move/impcus`
+  Nigeria imports; Brent added later on the same route (row 9, duoarea `ZEU`).
+- Security near-miss recorded: key briefly pasted into `.env.example` — moved to
+  `.env` before any commit. Check staged files when touching env docs.
+**Accept:** live pulls cached with sidecars; row 2 ✅.
+
+## Step 11 — Phase 2a: five-crude slate ✅ (2026-09-19, commit `710f6e2`)
+- Parsers for two vendor formats (TE interleaved half-tables wt%; XOM 10 °C vol%
+  grid) → validated `AssayRecord`s → `data/derived/slate_phase1.parquet` + sidecar.
+- Arab Light / Urals substituted (no open TBP assays) per spec §8 item 1.
+- Physical-invariant validator (cumulative yield non-decreasing in T) caught a
+  real parser bug — junk from cut-property sections. Keep invariants in validators.
+**Accept:** slate validates; ground-truth vs published cut tables ±0.2 vol% (later §5).
+
+## Step 12 — Phase 2b: Stage-1 bridge ✅ (2026-09-19, commit `a805e4f`)
+- `features/bridge.py`: TBP cut-point integration; FCC conversion 40→80% of VGO
+  linear in severity (Gary & Handwerk cited); HT loss 1% (ICCT ex. 17); curves
+  stored vol%-uniform.
+- Maples FCC correlations rejected for traceability (coefficient tables not
+  openly reproducible) — do not re-litigate.
+- Ground truth: parsed-curve cuts vs published Bonny Light cut yields ±0.2 vol%;
+  the one gap (low-naphtha cut) explained physically (~2.1 vol% dissolved C2–C4
+  in the TBP's first row, quantified from the sheet's gas composition).
+**Accept:** methodology.md cites every constant; objective gains `yield_model` hook.
+
+## Step 13 — Phase 2c: cost anchor ✅ (2026-09-19, commits `378dea6`+`10b7a4a`)
+- `brent_spot` live-verified (duoarea **`ZEU`** — the `RGC` guess probed empty:
+  0-row cache is valid API behavior, noted).
+- `data/costs.py`: delivered cost = trailing-12m Brent ($69.10) + per-grade
+  differential (every value ASSUMED with quality rationale; strict KeyError on
+  unknown grade). Result with real economics: DE picks 47% Forcados + 52% ANS.
+- CI caught an F841 my local `tail -1` had masked — lesson: check exit codes,
+  never the last line of piped output.
+**Accept:** row 9 ✅; artifact + sidecar committed; app runs real costs.
+
+## Step 14 — Phase 2d: quality specs + real product prices ✅ (2026-09-19, `0577952`)
+- `features/quality.py`: RON (linear-by-volume), RVP (psi^1.25 index, Haverly),
+  jet freeze, diesel cetane — from the bridge's component streams (one mass
+  balance, `component_volumes()`), enforced via `quality_model` hook.
+- Bridge gains octane units (isom/reform/alkylate/butane pull) — required, or
+  RON 91 is infeasible by construction (SR naphtha blends at RON ≈ 58).
+- XOM's RON row unusable in PDF extraction (MON > RON under every alignment) —
+  labeled ASSUMED; freeze/cetane cross-check cleanly vs TE.
+- Product prices: EIA USGC 12-mo averages ($84.77/$93.49/$88.94); petrochem stays
+  disclosed PLACEHOLDER (probed `pri/resid`, `pri/refoth`, naphtha codes — no
+  citable series).
+- Proof the constraints have teeth: DE lands ~98% ANS with RON 91.4 / cetane 45.1
+  both nearly binding.
+**Accept:** Phase 2 complete; 102 tests; all docs updated.
+
+## Step 15 — Phase 3: ETR surrogate ✅ (2026-09-19, `710f6e2`→`0577952` lineage, final push CI `35426502472`)
+- `models/dataset.py`: 4,000 Dirichlet(α=0.55) × U(0,1) severity rows; features =
+  blend-weighted properties + blend-weighted TBP cuts (the bridge's inputs).
+- `models/train_surrogate.py`: ETR 150×14×4 (300 trees = 96.5 MB pkl, violates
+  the 50 MB hosting guard — don't re-tune); dual CV per spec §3.5; self-written
+  permutation importance (sklearn's scorer chokes on multi-output).
+- Results (`models/model_card.md`, committed): 5-fold min R² **0.982** (gate
+  passed); LCO — gasoline 0.93 / diesel 0.78 / petrochem 0.97, **jet 0.11**
+  (honesty finding: the ANS fold tests below the training range; trees can't
+  extrapolate; deployment never needs unseen crudes).
+- Provenance row 7 superseded honestly: the MIT ML-PSE FCCU dataset is
+  fault-detection data (no severity sweep) — confirmed via the repo's
+  `dynamic.m`/`Plotall.m` — so the bridge's cited severity shape stands.
+- DE hot-path lesson: per-call DataFrame + threadpool in `predict` made the app
+  smoke time out (300 s); numpy rows + `n_jobs=1` inside DE fixed it.
+**Accept:** both CV protocols reported; pkl gitignored + deterministic; 114 tests.
+
+## Step 16 — Phase 4: optimization driver + baselines ✅ (CI `35429004230`)
+- Exact batch paths: `bridge.blend_yields_batch` + `quality.BatchQualityModel`
+  (affine-in-severity decomposition) — row-wise ≡ scalar paths at machine
+  precision (pinned in `tests/test_phase4.py`). scipy vectorized DE passes
+  populations **(n_vars, S)** — `batch_call` normalizes axes.
+- `optimization/baselines.py`: equal-weight · random search (10k feasible draws,
+  batched) · **exact LP** — `u_j = s·x_j` linearizes the affine physics; quality
+  specs are hard linear constraints from the same coefficients as the DE penalty.
+- Structural finding: **DE ≡ LP to <$0.005/bbl** — the physics are linear in the
+  decision variables (methodology §6a). The honest bar (problem statement §4) is
+  met exactly, mechanism documented. ⚠️ Don't double-square the quality
+  violation — `violation_magnitude` already applies the LQ form once.
+- Speed: **0.85 s (bridge) / ~3.4 s (ETR) per DE run — was ~127 s scalar.**
+- 100-seed sweep committed (`data/derived/sensitivity_phase4.json`, mean
+  $15.84 ± 0.00, uplift +11.3% through the surrogate) + convergence/histogram
+  figures in `docs/assets/`.
+- Buffer-week decision (spec §8 item 7): buffer goes to Phase 4 hardening +
+  Phase 5 head start; full Monte Carlo chosen over the 3-scenario fallback.
+**Accept:** 3-way baseline table in the app; runtime disclosed; 121 tests.
+
+## Step 17 — Phase 5: scenario analysis ✅ (CI `35432368256`)
+- `optimization/scenarios.py`: historical **block bootstrap** (blocks of 12
+  consecutive months of EIA Δlog Brent+USGC, 2015–2025) — the brief's open
+  questions answered with data: distribution = bootstrap; correlated shocks =
+  inherited from real co-moves; FX/demand = documented out-of-scope (USD
+  single-period price-taker, spec §7).
+- Per-draw **LP re-solve** on the Phase 4 skeleton (`build_lp_problem`/`solve_lp`
+  refactor — constraints price-independent; ~8.5 ms/draw; 10k in 85 s).
+- ⚠️ Brent linkage: additive Δ = Brent_ref·(f−1) **cancels from the LP argmax**
+  (Σx = 1) — subtract from margins, never add to LP costs; differentials preserved.
+- ⚠️ Cache lookup: sidecar-located (`acquire.load_cached_series`) — cache-key
+  reconstruction drifts when fetch params change.
+- Results (`data/derived/scenarios_phase5.json`, seed 20260919): mean $17.68
+  ± 8.29, **VaR(5%) $6.25 / CVaR(5%) $1.42 / P(loss) 0.8%**; fixed-blend CVaR(5%)
+  **−$3.50** → re-optimization worth **+$2.56/bbl** and converts the tail
+  positive. Two-regime diet: ANS 50.5% / Forcados 47.9% of draws.
+- Fan + tornado figures in `docs/assets/`; app renders the precomputed summary
+  (HF cold-start-safe; underscore-imports for marimo cell collisions).
+**Accept:** 10k iterations with per-scenario re-optimization; VaR/CVaR/tornado
+delivered; 127 tests; CI green.
+
+## Step 18 — Phase 6 (next, not started)
+1. Pin the CVE-2026-39987-patched marimo release in `pyproject.toml` (spec open
+   item 5) and re-run CI.
+2. HF Space: fork the marimo template → copy `app/app.py` → pinned
+   `requirements.txt` from `uv.lock` → verify cold start renders precomputed
+   content <2 s. **Requires user's HF account.**
+3. Live ticker (provenance row 8): NGN/USD FX (open.er-api.com, cache 1 h) + WTI
+   spot — the last live piece of the hybrid pricing decision (spec §4 decision 7).
+4. HF Static Space portfolio page linking to the app.
+
+## Free-tier ledger (nothing above has a paid component)
+| Resource | Tier | Limit we design around |
+|----------|------|------------------------|
+| GitHub repo + Actions | Free (public) | 2,000 CI min/mo (~2/run used) |
+| HF Space (Step 18) | Free CPU | sleeps ~48 h; cold start covered by precomputed cells |
+| Colab | Free CPU | optional; everything runs locally |
+| EIA API | Free key | 5,000 req/h (cache-first parquet) |
+| HF datasets streaming | Free | no bulk download |
+| open.er-api.com FX (Step 18) | Free | fair use; cache 1 h |

@@ -1,6 +1,49 @@
 # Project Knowledge
 
-## Session Handover (2026-09-19h) — START HERE
+## ★ HANDOFF (2026-09-19, end of day) — READ THIS FIRST
+
+**State: Phases 0–5 complete, CI green, 127 tests. Awaiting the Phase 6 go.**
+
+All five modeling phases shipped in one day (2026-09-18 → 09-19), every phase
+with its own commit, docs, and tests; the full execution log with acceptance
+criteria is `docs/setup-steps.md` Steps 0–17. Architecture, commands,
+conventions, and settled decisions: `AGENTS.md`. Every number's provenance:
+`docs/methodology.md`. This file below carries per-session detail + gotchas.
+
+**Headline numbers (for the write-ups / interviews):**
+
+| Result | Value | Where |
+|---|---|---|
+| Optimal diet (base) | ~100% ANS @ max severity, $15.67/bbl | DE = LP, app |
+| Uplift vs equal-weight | +10.0% (impressive gate >10% met) | `sensitivity_phase4.json` |
+| DE vs exact LP | ≡ within $0.005 — physics are linear | methodology §6a |
+| Surrogate 5-fold R² (min) | 0.982 (gate >0.90 passed); jet LCO 0.11 = honesty finding | `models/model_card.md` |
+| Bridge ground truth | ±0.2 vol% vs published cut tables | methodology §5 |
+| Re-optimization value | +$2.56/bbl mean; tail CVaR −$3.50 → +$1.42 | `scenarios_phase5.json` |
+| Downside risk | VaR(5%) $6.25 · CVaR(5%) $1.42 · P(loss) 0.8% | `scenarios_phase5.json` |
+| DE runtime | 0.85 s bridge / 3.4 s surrogate (was 127 s) | 30–60 s budget, 20× headroom |
+
+**Next: Phase 6 (dashboard & deploy)** — in order:
+1. Pin the CVE-2026-39987-patched marimo release in `pyproject.toml` (spec open
+   item 5; floor is `marimo>=0.12` today) → CI.
+2. HF Space deploy — **needs the user's HF account** (fork marimo template →
+   `app.py` + pinned `requirements.txt` from `uv.lock` → verify cold start
+   renders precomputed content <2 s). Deep re-opt is ~3 s, inside budget.
+3. Live ticker: NGN/USD FX (open.er-api.com, provenance row 8, cache 1 h) + WTI
+   spot — last live piece of the hybrid pricing decision (spec §4 decision 7).
+4. HF Static Space portfolio page linking the app.
+
+**After Phase 6:** Phase 7 (blog post, exec summary, video, talking points) and
+the optional marimo narrative notebooks (spec decision 12); OPEC MOMR
+differential refresh remains a documented Phase 2+ refresh path.
+
+**Do not re-litigate (settled):** see `AGENTS.md` §"Things to avoid" — marimo,
+Maples rejection, FCCU-dataset supersession, slate substitution, ETR size,
+scipy vectorized-DE conventions, Brent-shift math, sidecar-based cache reads.
+
+---
+
+## Session Handover (2026-09-19h) — Phase 5 session
 - **Phase 5 DONE (2026-09-19h):** `optimization/scenarios.py` — 10k-draw Monte Carlo, **historical block bootstrap** (blocks of 12 consecutive months of EIA Δlog Brent+USGC, 2015–2025 — the brief's "what distribution / correlated shocks?" answered empirically; FX/demand = documented out-of-scope, USD price-taker). Per-draw **LP re-solve** via the Phase 4 skeleton (`build_lp_problem`/`solve_lp` — constraints price-independent, only `c` moves; ~8.5 ms/draw, 85 s total). ⚠️ Brent linkage: additive Δ = Brent_ref·(f−1) **cancels from the LP argmax** (Σx=1) — subtract from margin, never add to LP costs (differentials preserved). Results (`data/derived/scenarios_phase5.json`, seed 20260919): mean $17.68 ± 8.29, **VaR5 $6.25 / CVaR5 $1.42 / P(loss) 0.8%**; fixed-blend CVaR5 **−$3.50** → **re-opt worth +$2.56/bbl AND de-risks the tail**; two-regime diet ANS 50.5% / Forcados 47.9%. Fan + tornado figures in `docs/assets/`; app renders the precomputed summary (underscore-imports `_json`/`_Path` — marimo multi-cell collision workaround). `acquire.load_cached_series` = sidecar-located offline cache read (⚠️ cache-key reconstruction drifts when fetch params change — don't reconstruct). **127 tests.**
 - **Next up: Phase 6** — dashboard & deploy: marimo app → HF Spaces (pin CVE-2026-39987-patched marimo release first, spec open item 5); deep re-opt UX now trivially inside budget (~3 s); precomputed artifacts render instantly on cold start.
 - **Also open:** verify driver on *real* Colab (optional); OPEC MOMR differential refresh; notebook polish (marimo narrative per phase — spec decision 12).
