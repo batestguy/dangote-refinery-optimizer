@@ -1,0 +1,22 @@
+[    6001ms] [LOG] 🔧 Project configuration overrides: {runtime: Object} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[   11698ms] [WARNING] The resource http://127.0.0.1:2718/assets/gradient-yHQUC_QB.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   11698ms] [WARNING] The resource http://127.0.0.1:2718/assets/noise-60BoTA8O.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   16856ms] [WARNING] The resource http://127.0.0.1:2718/assets/gradient-yHQUC_QB.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   16856ms] [WARNING] The resource http://127.0.0.1:2718/assets/noise-60BoTA8O.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   28650ms] [WARNING] The resource http://127.0.0.1:2718/assets/gradient-yHQUC_QB.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   28650ms] [WARNING] The resource http://127.0.0.1:2718/assets/noise-60BoTA8O.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   39361ms] [WARNING] The resource http://127.0.0.1:2718/assets/gradient-yHQUC_QB.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   39362ms] [WARNING] The resource http://127.0.0.1:2718/assets/noise-60BoTA8O.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[  251628ms] [WARNING] WebSocket closed 1006  @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  256219ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:2718/ws?session_id=s_y7cdoo' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:2718/assets/ws-DLVysDhS.js:21
+[  256220ms] [WARNING] WebSocket closed close t @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  256222ms] [WARNING] Unexpected object: {"isTrusted":false,"code":1000,"reason":"","wasClean":true} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  256223ms] [WARNING] WebSocket error Event @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  256299ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:2718/ws?session_id=s_y7cdoo' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:2718/assets/ws-DLVysDhS.js:21
+[  256300ms] [WARNING] WebSocket closed close t @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  256300ms] [WARNING] Unexpected object: {"isTrusted":false,"code":1000,"reason":"","wasClean":true} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  256301ms] [WARNING] WebSocket error Event @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  260906ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:2718/ws?session_id=s_y7cdoo' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:2718/assets/ws-DLVysDhS.js:21
+[  260906ms] [WARNING] WebSocket closed close t @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  260907ms] [WARNING] Unexpected object: {"isTrusted":false,"code":1000,"reason":"","wasClean":true} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  260907ms] [WARNING] WebSocket error Event @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0

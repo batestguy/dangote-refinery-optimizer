@@ -1,0 +1,12 @@
+[    4979ms] [LOG] 🔧 Project configuration overrides: {runtime: Object} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[   20905ms] [WARNING] The resource http://127.0.0.1:2718/assets/gradient-yHQUC_QB.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   20905ms] [WARNING] The resource http://127.0.0.1:2718/assets/noise-60BoTA8O.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[  103939ms] [WARNING] WebSocket closed 1006  @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  108913ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:2718/ws?session_id=s_cwmdvs' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:2718/assets/ws-DLVysDhS.js:21
+[  108915ms] [WARNING] WebSocket closed close t @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  108917ms] [WARNING] Unexpected object: {"isTrusted":false,"code":1000,"reason":"","wasClean":true} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  108918ms] [WARNING] WebSocket error Event @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  108986ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:2718/ws?session_id=s_cwmdvs' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:2718/assets/ws-DLVysDhS.js:21
+[  108987ms] [WARNING] WebSocket closed close t @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  108990ms] [WARNING] Unexpected object: {"isTrusted":false,"code":1000,"reason":"","wasClean":true} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[  108991ms] [WARNING] WebSocket error Event @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0

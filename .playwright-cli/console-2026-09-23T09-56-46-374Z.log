@@ -1,0 +1,3 @@
+[    5025ms] [LOG] 🔧 Project configuration overrides: {runtime: Object} @ http://127.0.0.1:2718/assets/useEventListener-92uWqz-P.js:0
+[   16839ms] [WARNING] The resource http://127.0.0.1:2718/assets/gradient-yHQUC_QB.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
+[   16840ms] [WARNING] The resource http://127.0.0.1:2718/assets/noise-60BoTA8O.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:2718/:0
