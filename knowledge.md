@@ -1,16 +1,64 @@
 # Project Knowledge
 
-## ★ HANDOFF (2026-09-19, end of day) — READ THIS FIRST
+## ★ HANDOFF (2026-09-23, evening) — READ THIS FIRST
 
-**State: Phases 0–5 complete, CI green, 127 tests. Phase 6 in progress —
-marimo CVE pin DONE (2026-09-23); next blocker is the HF Space, which needs
-the user's HF account.**
+**State: Phases 0–5 complete · Phase 6 code-complete (dashboard redesigned,
+ticker live, deploy kit verified) · Phase 7 opened (exec summary + blog
+drafted) · 137 tests, CI green, all pushed. Remaining: user-side HF Space
+push + Phase 7 talking points/video + UI polish (open to suggestions).**
 
-All five modeling phases shipped in one day (2026-09-18 → 09-19), every phase
-with its own commit, docs, and tests; the full execution log with acceptance
-criteria is `docs/setup-steps.md` Steps 0–17. Architecture, commands,
-conventions, and settled decisions: `AGENTS.md`. Every number's provenance:
-`docs/methodology.md`. This file below carries per-session detail + gotchas.
+**What the dashboard IS now (2026-09-23, evening):** a dark "refinery control
+room" console — graphite `#0f0d0b` + amber crude accents, Barlow Condensed /
+IBM Plex Mono, KPI tiles, numbered sections 01–06 with "what you're looking
+at" captions, START-here stepper, real CC-licensed photos of the Lekki site
+(hero backdrop, base64-embedded) + the CDU unit (section 03), live NGN/USD +
+WTI ticker with LIVE/STALE/SNAP badges, deep re-opt with the LP honest bar
+wired in ($15.67 vs DE $15.84 through the surrogate), "how to read" callouts.
+Local preview: `PYTHONUTF8=1 uv run marimo run app/app.py` (a dev server was
+still running on port 2718 at handoff — kill via
+`netstat -ano | grep :2718` then `taskkill //PID <pid> //F`).
+
+**⚠️ Run-button "Failed to update value" — ROOT CAUSE KNOWN, not a code bug:**
+marimo's **skew protection** rejects clicks from browser tabs holding a stale
+server token (exact log line in `/tmp/marimo.log`: `Received request with
+invalid server token (skew protection token)… Expected: …, got: …`). Cause:
+the server was restarted repeatedly during the redesign while the user's tab
+stayed open. **Fix for the user: hard-refresh the tab (Ctrl+F5) or reopen the
+URL.** Verified working 3× in fresh automated sessions (result card renders:
+DE $15.84 / LP $15.67 / feasible). If it EVER fails after a hard refresh,
+check the server log for the token line before touching code.
+
+**Next-session queue (in order):**
+1. **UI polish — OPEN TO SUGGESTIONS (user asked to keep this open).** Ideas
+   backlog: restyle matplotlib fan/tornado PNGs to dark (they render as white
+   plates against the console — biggest visual mismatch left); Run-button
+   loading UX (`mo.status.spinner()` around the DE — currently silent for
+   ~8–15 s); responsive/mobile pass; contrast/accessibility audit
+   (ui-geometry-audit + web-design-guidelines skills exist); possible
+   count-up animations, per-product margin waterfall, hover drill-downs.
+2. **User-side HF push** — `deploy/hf-push-runbook.md` has exact commands
+   (`scripts/build_space_root.py` assembles + asserts; simulation-verified).
+   Then fill `YOUR_HF_USERNAME` in `deploy/portfolio/README.md` + add the
+   Space badge to README.
+3. **Phase 7 remainder:** interview talking points, video, blog platform
+   choice (spec §8). `docs/executive-summary.md` + `docs/blog-post.md` are
+   publication-ready drafts.
+4. Optional/deferred: OPEC MOMR differential refresh, Colab verify, marimo
+   narrative notebooks (spec decision 12).
+
+**Quick index of what's where (new this cycle):** design system = first cell
+of `app/app.py` (one `<style>`, plain string — CSS braces break f-strings);
+Space kit = `deploy/` (Dockerfile with the documented `PYTHONPATH=/app/src`
+line, lock-true `requirements.txt`, runbook, portfolio, `space_readme.md`);
+assembly = `scripts/build_space_root.py` (hard-fail assertions incl. pin-vs-
+lock drift); imagery = `docs/assets/credited/` + `CREDITS.md` (provenance row
+3b); ticker = `src/dangote_opt/data/ticker.py` + `tests/test_ticker.py`;
+Phase 7 drafts = `docs/executive-summary.md`, `docs/blog-post.md`.
+Screenshots live in untracked `output/playwright/`.
+
+Session-by-session detail below; execution log = `docs/setup-steps.md`
+(Steps 0–19); architecture/conventions = `AGENTS.md`; number provenance =
+`docs/methodology.md` + `docs/data_provenance.md`.
 
 **Headline numbers (for the write-ups / interviews):**
 
@@ -87,6 +135,30 @@ scipy vectorized-DE conventions, Brent-shift math, sidecar-based cache reads.
   model note). `deploy/requirements.txt` now carries `requests` (ticker
   imports it directly) + `plotly` (dashboard charts) explicitly.
 - **Next up: unchanged** — Step 18 item 2 user-side HF Space execution.
+
+## Session Handover (2026-09-23f) — imagery + Run-button root cause
+- **Photos wired (commit 283675f):** hero backdrop = Lekki site shot
+  (GodwinPaya) base64-embedded in app.py's CSS (data URI → zero cold-start
+  requests, works on HF unchanged); CDU unit photo (FrankvEck) + "choice at a
+  glance" stat card in section 03. Both CC BY-SA 4.0; credits inline +
+  `docs/assets/credited/CREDITS.md` + provenance row 3b; Space assembly ships
+  them. ⚠️ Commons discipline: NEVER hand-build upload.wikimedia URLs (hash
+  paths — got a 135-byte 404 page); always fetch via the Commons API
+  `prop=imageinfo` `iiprop=url|extmetadata` (also returns author/license).
+  Original 13.85 MB hero downscaled via PIL to 1600px/356 KB q80.
+- **marimo collisions round 2:** `base64`/`Path` defined in 3 cells after the
+  imagery work → underscore-aliased per cell (`_base64`/`_Path`,
+  `_cbase64`/`_cPath`). Every new cell must alias stdlib imports uniquely.
+- **Skew-protection gotcha (the "Run failed" mystery):** marimo middleware
+  rejects UI events from tabs whose server token doesn't match — after ANY
+  server restart, open tabs get "Failed to update value" on click. Log line:
+  `middleware:160 … invalid server token`. Remedy = tab refresh; NOT a code
+  bug (verified 3× fresh-session green: DE $15.84, LP $15.67, feasible).
+- **UI backlog for next session (user explicitly open to suggestions):**
+  dark-restyle the matplotlib fan/tornado PNGs (white plates = the last
+  visual mismatch), spinner UX on Run (~8–15 s silent), responsive pass,
+  a11y audit (skills: ui-geometry-audit, web-design-guidelines), optional
+  waterfall/count-up flourishes.
 
 ## Session Handover (2026-09-23e) — dashboard redesign (control-room console)
 - **Design system shipped** (`app/app.py`): dark warm-graphite console

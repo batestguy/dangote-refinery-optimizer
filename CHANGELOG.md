@@ -5,6 +5,14 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Real refinery imagery, credited** (dashboard): two CC BY-SA 4.0 photos of
+  the actual Dangote Refinery at Lekki from Wikimedia Commons — site hero
+  (GodwinPaya) embedded as a base64 data URI behind the hero panel's graphite
+  gradient (356 KB, zero cold-start requests) and the crude distillation unit
+  (FrankvEck) anchoring section 03 beside a decision-summary card tying the
+  severity variable to the real CDU. Inline credit links, `CREDITS.md`
+  sidecar, provenance row 3b; Space assembly ships the assets. License
+  metadata via the Commons API (never hand-build upload.wikimedia URLs).
 - **HF Space assembly + verification pipeline** (`scripts/build_space_root.py`,
   `deploy/hf-push-runbook.md`): assembles `deploy/space_root/` (gitignored
   build artifact) — the exact tree to push — with deploy-safety assertions:
