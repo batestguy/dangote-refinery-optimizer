@@ -3,6 +3,9 @@ COPY --from=ghcr.io/astral-sh/uv:0.4.20 /uv /bin/uv
 RUN useradd -m -u 1000 user
 ENV PATH="/home/user/.local/bin:$PATH"
 ENV UV_SYSTEM_PYTHON=1
+# Template + 1 line: the app imports its own src/dangote_opt package, which the
+# Space never pip-installs (see HF marimo docs: modify the Dockerfile as needed).
+ENV PYTHONPATH="/app/src"
 WORKDIR /app
 COPY --chown=user ./requirements.txt requirements.txt
 RUN uv pip install -r requirements.txt

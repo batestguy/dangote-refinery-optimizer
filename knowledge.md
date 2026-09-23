@@ -88,6 +88,28 @@ scipy vectorized-DE conventions, Brent-shift math, sidecar-based cache reads.
   imports it directly) + `plotly` (dashboard charts) explicitly.
 - **Next up: unchanged** — Step 18 item 2 user-side HF Space execution.
 
+## Session Handover (2026-09-23d) — deploy pipeline + Phase 7 drafts
+- **Space assembly pipeline DONE:** `scripts/build_space_root.py` →
+  `deploy/space_root/` (gitignored build artifact, 38 files: app.py, src/,
+  data/derived slices, risk PNGs, requirements/Dockerfile/README) with
+  hard-fail assertions: no `.env`, no `*.pkl`, artifact completeness, marimo
+  CVE floor, **pin-vs-lock drift guard**. ⚠️ Two real catches: (1) pins were
+  derived from `uv pip list` — the venv had drifted ahead of uv.lock
+  (numpy 2.5.3 vs 2.4.6, scipy 1.18.1 vs 1.17.1); pins now generated from
+  uv.lock (one-liner in deploy/README.md); (2) **Space simulation** (headless
+  export inside space_root with dangote-opt uninstalled) failed on
+  ModuleNotFoundError — the template Dockerfile never installs the app's own
+  package → documented one-line fix `ENV PYTHONPATH=/app/src` in
+  deploy/Dockerfile. Simulation now passes = the exact image condition
+  verified end to end.
+- **User-side remaining (Step 18 item 2):** `deploy/hf-push-runbook.md` has
+  the exact commands (create Docker Space → run script → push space_root →
+  cold-start gate <2 s). Item 4 content ready: `deploy/portfolio/README.md`.
+- **Phase 7 STARTED (Step 19):** `docs/executive-summary.md` (answer-first,
+  headline table, risk framing, non-goals) + `docs/blog-post.md` ("The
+  honest optimizer" — DE=LP as the hook) are publication-ready drafts;
+  talking points + video remain; blog platform still open (spec §8).
+
 ## Session Handover (2026-09-23b) — Phase 6: ticker + deploy prep
 - **Ticker DONE:** see HANDOFF item 3 above for the full detail (module,
   facets, snapshot, tests). Key files: `src/dangote_opt/data/ticker.py`,

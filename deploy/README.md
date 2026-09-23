@@ -23,9 +23,13 @@ and the deep re-opt stays a bridge-path run (~0.85 s, no surrogate needed).
 * `requirements.txt` — exact versions from `uv.lock` (regenerate with the
   grep command below after any `uv sync`). `joblib`, `matplotlib`, `plotly`,
   `requests` arrive as transitive deps of the pinned set.
-* `Dockerfile` — verbatim mirror of the official
-  `marimo-team/marimo-app-template` Dockerfile (uv install, non-root user,
-  `marimo run app.py --include-code --host 0.0.0.0 --port 7860`).
+* `Dockerfile` — the official `marimo-team/marimo-app-template` Dockerfile
+  plus **one documented line**: `ENV PYTHONPATH=/app/src`, because the app
+  imports its own `src/dangote_opt` package, which the Space never
+  pip-installs (verified by Space simulation: without it the build fails at
+  import time with ModuleNotFoundError). Everything else is template-verbatim
+  (uv install, non-root user, `marimo run app.py --include-code --host
+  0.0.0.0 --port 7860`).
 
 ## Deploy checklist (user actions in **bold**)
 
@@ -45,10 +49,19 @@ and the deep re-opt stays a bridge-path run (~0.85 s, no surrogate needed).
 
 ## Regenerating requirements.txt from uv.lock
 
+⚠️ **Never derive pins from `uv pip list`** (the local venv drifts from the
+lock — numpy 2.5.3 vs 2.4.6 here). The authoritative source is `uv.lock`:
+
 ```bash
-grep -A1 '^name = "marimo"' uv.lock   # + numpy/pandas/pyarrow/scipy/
-# scikit-learn/python-dotenv — keep in sync with `uv pip list`
+for pkg in marimo numpy pandas pyarrow scipy scikit-learn python-dotenv \
+           requests plotly; do
+  grep -A1 "^name = \"$pkg\"$" uv.lock | grep "^version" | head -1 \
+    | sed "s/version = \"\(.*\)\"/$pkg==\1/"
+done > deploy/requirements.txt
 ```
+
+`scripts/build_space_root.py` verifies pins against `uv.lock` on every run
+and hard-fails on drift, so a stale pin can never ship.
 
 ## Regenerating the ticker snapshot before each deploy
 

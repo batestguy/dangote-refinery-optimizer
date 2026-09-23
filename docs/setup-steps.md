@@ -243,13 +243,32 @@ delivered; 127 tests; CI green.
    (exact `uv.lock` versions) + the verbatim template Dockerfile + the deploy
    checklist (`deploy/README.md`). Remaining actions are user-side (create the
    Space, push the assembled root, watch the cold-start gate).
+   — assembly hardened + verified 2026-09-23: `scripts/build_space_root.py`
+   assembles `deploy/space_root/` with safety assertions (no `.env`, no pkl,
+   marimo CVE floor, pin-vs-lock drift guard — which caught a real drift:
+   pins must come from `uv.lock`, not `uv pip list`), and the tree passed a
+   **Space simulation** (headless export with the local package uninstalled),
+   which forced a documented Dockerfile fix: `ENV PYTHONPATH=/app/src`.
 3. ✅ (2026-09-23) Live ticker (provenance row 8): NGN/USD FX (open.er-api.com,
    cache 1 h) + WTI spot (EIA daily `EPCWTI`/`YCUOK`, probed live) shipped in
    `data/ticker.py` + app cell; snapshot fallback
    `data/derived/ticker_latest.json` committed; 10 new tests (137 total).
 4. HF Static Space portfolio page linking to the app.
+   — page content ready 2026-09-23: `deploy/portfolio/README.md` (static SDK
+   frontmatter, headline-results table, links; `YOUR_HF_USERNAME` placeholder
+   to fill at push). User push remains.
+
+## Step 19 — Phase 7 documentation & packaging (started 2026-09-23)
+1. ✅ (2026-09-23) `docs/executive-summary.md` — answer-first brief with the
+   headline-numbers table, methodology proof points, planner risk framing,
+   scope non-goals, one-paragraph version.
+2. ✅ (2026-09-23) `docs/blog-post.md` — "The honest optimizer" narrative
+   (DE = LP structural finding as the hook), publication-ready draft;
+   platform choice (Medium vs personal site) still open (spec §8).
+3. 🔜 Interview talking points + video — remaining Phase 7 deliverables.
 
 ## Free-tier ledger (nothing above has a paid component)
+
 | Resource | Tier | Limit we design around |
 |----------|------|------------------------|
 | GitHub repo + Actions | Free (public) | 2,000 CI min/mo (~2/run used) |

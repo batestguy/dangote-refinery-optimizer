@@ -34,3 +34,6 @@ Thumbs.db
 
 # Agent tooling artifacts (not project code)
 .agents/
+
+# Generated HF Space root (build artifact — rebuild with scripts/build_space_root.py)
+deploy/space_root/

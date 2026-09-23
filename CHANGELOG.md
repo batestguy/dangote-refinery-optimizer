@@ -5,6 +5,26 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **HF Space assembly + verification pipeline** (`scripts/build_space_root.py`,
+  `deploy/hf-push-runbook.md`): assembles `deploy/space_root/` (gitignored
+  build artifact) — the exact tree to push — with deploy-safety assertions:
+  no `.env`, no `*.pkl`, derived-artifact completeness, marimo CVE floor,
+  and a pin-vs-lock drift guard; generates the Space `README.md` (Docker
+  frontmatter). The tree passed a **Space simulation** — headless app export
+  inside `deploy/space_root/` with the local package uninstalled, i.e. the
+  exact image condition — which caught a real deploy blocker: the template
+  Dockerfile never installs the app's own package, fixed with one documented
+  line (`ENV PYTHONPATH=/app/src`; HF marimo docs sanction Dockerfile
+  modification). The drift guard also caught `deploy/requirements.txt` having
+  been derived from `uv pip list` (drifted venv: numpy 2.5.3/scipy 1.18.1)
+  instead of `uv.lock` (2.4.6/1.17.1) — regenerated lock-true.
+- **HF Static portfolio page content** (`deploy/portfolio/README.md`):
+  headline-results table, links to the app Space and repo, credibility
+  framing — `YOUR_HF_USERNAME` placeholder to fill at push.
+- **Phase 7 drafts** (`docs/executive-summary.md`, `docs/blog-post.md`):
+  answer-first exec brief with the headline-numbers table and planner risk
+  framing; publication-ready blog post ("The honest optimizer") built on the
+  DE = LP structural finding. Talking points + video remain.
 - **Phase 6 live market ticker** (`data/ticker.py`, `scripts/refresh_ticker_snapshot.py`,
   app cell): NGN/USD FX from open.er-api.com (provenance row 8, keyless, 1 h
   disk cache) + WTI spot via a new `wti_spot_daily` EIA catalog entry
