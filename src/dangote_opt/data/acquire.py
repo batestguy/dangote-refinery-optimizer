@@ -147,6 +147,22 @@ CATALOG: dict[str, EiaSeries] = {
         },
         notes="Verified 2026-09-19: Europe Brent spot FOB (series RBRTE, ZEU, $/bbl)",
     ),
+    # Daily WTI spot FOB — Phase 6 dashboard ticker (provenance row 8 adjacent).
+    # Same route as brent_spot; product EPCWTI / process PF4 / duoarea YCUOK
+    # (Cushing — probed live 2026-09-23, the only area EPCWTI carries on this
+    # route; same pattern as Brent's ZEU). Native $/bbl, daily frequency.
+    "wti_spot_daily": EiaSeries(
+        key="wti_spot_daily",
+        route="petroleum/pri/spt",
+        data_columns=("value",),
+        frequency="daily",
+        facets={
+            "product": ("EPCWTI",),  # WTI Crude Oil
+            "process": ("PF4",),  # Spot Price FOB
+            "duoarea": ("YCUOK",),  # Cushing, OK — the only area EPCWTI carries here
+        },
+        notes="Verified 2026-09-23: WTI spot FOB daily (YCUOK, $/bbl; latest row 2026-09-15)",
+    ),
 }
 
 

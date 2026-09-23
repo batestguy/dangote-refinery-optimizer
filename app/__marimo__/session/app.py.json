@@ -1,0 +1,100 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.24.2",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "a9d43d6ece555a5d4445d2011ca34e26",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "31eeee4810d93091d101946d0642568e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "c3d4de2def8b009fec46c71d160c076a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='vblA-0' random-id='939cdfcc-2ce8-d09e-cf4b-9c4be14e8b04'><marimo-slider data-initial-value='0.5' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eBaseline FCC severity (equal-weight comparison)&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-start='0.0' data-stop='1.0' data-step='0.01' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='vblA-1' random-id='797101fe-2ab6-e3a1-663b-878520b22a25'><marimo-button data-initial-value='0' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003e\u26a1 Run deep optimization&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-kind='&quot;neutral&quot;' data-disabled='false' data-full-width='false'></marimo-button></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "a07f6ba799bfce802e6a591e45a48df4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Set the baseline severity, then hit <strong>Run</strong> to optimize the blend.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "c3978134ad69b6024fc28cae159c598e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><div class=\"language-verilog highlight\"><pre><span></span><code><span class=\"p\">##</span><span class=\"w\"> </span><span class=\"n\">Scenario</span><span class=\"w\"> </span><span class=\"n\">risk</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">Phase</span><span class=\"w\"> </span><span class=\"mh\">5</span><span class=\"w\"> </span><span class=\"err\">\u2014</span><span class=\"w\"> </span><span class=\"mh\">10</span><span class=\"p\">,</span><span class=\"mh\">000</span><span class=\"w\"> </span><span class=\"n\">correlated</span><span class=\"w\"> </span><span class=\"n\">price</span><span class=\"w\"> </span><span class=\"n\">scenarios</span><span class=\"p\">)</span>\n\n<span class=\"n\">Historical</span><span class=\"w\"> </span><span class=\"n\">block</span><span class=\"w\"> </span><span class=\"n\">bootstrap</span><span class=\"w\"> </span><span class=\"n\">over</span><span class=\"w\"> </span><span class=\"kt\">real</span><span class=\"w\"> </span><span class=\"n\">EIA</span><span class=\"w\"> </span><span class=\"n\">monthly</span><span class=\"w\"> </span><span class=\"n\">co</span><span class=\"o\">-</span><span class=\"n\">moves</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">Brent</span><span class=\"w\"> </span><span class=\"o\">+</span><span class=\"w\"> </span><span class=\"n\">USGC</span>\n<span class=\"n\">products</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"mh\">2015</span><span class=\"err\">\u2013</span><span class=\"mh\">2025</span><span class=\"p\">);</span><span class=\"w\"> </span><span class=\"n\">each</span><span class=\"w\"> </span><span class=\"n\">draw</span><span class=\"w\"> </span><span class=\"o\">**</span><span class=\"n\">re</span><span class=\"o\">-</span><span class=\"n\">optimizes</span><span class=\"w\"> </span><span class=\"n\">the</span><span class=\"w\"> </span><span class=\"n\">blend</span><span class=\"o\">**</span><span class=\"w\"> </span><span class=\"n\">via</span><span class=\"w\"> </span><span class=\"n\">the</span><span class=\"w\"> </span><span class=\"n\">exact</span>\n<span class=\"n\">LP</span><span class=\"p\">.</span><span class=\"w\"> </span><span class=\"n\">Precomputed</span><span class=\"w\"> </span><span class=\"n\">summary</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"no\">`scripts</span><span class=\"o\">/</span><span class=\"n\">run_scenarios</span><span class=\"p\">.</span><span class=\"n\">py</span><span class=\"err\">`</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">deterministic</span><span class=\"p\">,</span>\n<span class=\"n\">seed</span><span class=\"w\"> </span><span class=\"mh\">20260919</span><span class=\"p\">)</span><span class=\"o\">:</span>\n\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Metric</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">re</span><span class=\"o\">-</span><span class=\"n\">optimized</span><span class=\"w\"> </span><span class=\"n\">per</span><span class=\"w\"> </span><span class=\"n\">draw</span><span class=\"p\">)</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Value</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|---|---|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Base</span><span class=\"w\"> </span><span class=\"n\">margin</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"err\">$</span><span class=\"mf\">15.67</span><span class=\"o\">/</span><span class=\"n\">bbl</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Mean</span><span class=\"w\"> </span><span class=\"err\">\u00b1</span><span class=\"w\"> </span><span class=\"err\">\u03c3</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"err\">$</span><span class=\"mf\">17.68</span><span class=\"w\"> </span><span class=\"err\">\u00b1</span><span class=\"w\"> </span><span class=\"mf\">8.29</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"o\">**</span><span class=\"n\">VaR</span><span class=\"w\"> </span><span class=\"mh\">5</span><span class=\"o\">%**</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"err\">$</span><span class=\"mf\">6.25</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"o\">**</span><span class=\"n\">CVaR</span><span class=\"w\"> </span><span class=\"mh\">5</span><span class=\"o\">%**</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"err\">$</span><span class=\"mf\">1.42</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">P</span><span class=\"p\">(</span><span class=\"n\">loss</span><span class=\"p\">)</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"mf\">0.8</span><span class=\"o\">%</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Fixed</span><span class=\"o\">-</span><span class=\"n\">blend</span><span class=\"w\"> </span><span class=\"n\">mean</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">no</span><span class=\"w\"> </span><span class=\"n\">re</span><span class=\"o\">-</span><span class=\"n\">opt</span><span class=\"p\">)</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"err\">$</span><span class=\"mf\">15.12</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"o\">**</span><span class=\"n\">Value</span><span class=\"w\"> </span><span class=\"n\">of</span><span class=\"w\"> </span><span class=\"n\">re</span><span class=\"o\">-</span><span class=\"n\">optimization</span><span class=\"o\">**</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"o\">**</span><span class=\"err\">$</span><span class=\"mf\">2.56</span><span class=\"o\">/</span><span class=\"n\">bbl</span><span class=\"o\">**</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Fixed</span><span class=\"o\">-</span><span class=\"n\">blend</span><span class=\"w\"> </span><span class=\"n\">CVaR</span><span class=\"w\"> </span><span class=\"mh\">5</span><span class=\"o\">%</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"err\">$</span><span class=\"o\">-</span><span class=\"mf\">3.50</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">vs</span><span class=\"w\"> </span><span class=\"mf\">1.42</span><span class=\"p\">)</span><span class=\"w\"> </span><span class=\"o\">|</span>\n\n<span class=\"o\">**</span><span class=\"n\">Blend</span><span class=\"w\"> </span><span class=\"n\">regime</span><span class=\"w\"> </span><span class=\"n\">switch</span><span class=\"w\"> </span><span class=\"n\">share</span><span class=\"o\">**</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">share</span><span class=\"w\"> </span><span class=\"n\">of</span><span class=\"w\"> </span><span class=\"n\">scenarios</span><span class=\"w\"> </span><span class=\"n\">each</span><span class=\"w\"> </span><span class=\"n\">crude</span><span class=\"w\"> </span><span class=\"n\">is</span><span class=\"w\"> </span><span class=\"n\">optimal</span><span class=\"w\"> </span><span class=\"n\">in</span><span class=\"p\">)</span><span class=\"o\">:</span>\n\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Crude</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Optimal</span><span class=\"w\"> </span><span class=\"n\">in</span><span class=\"w\"> </span><span class=\"o\">|</span>\n<span class=\"o\">|---|---|</span>\n<span class=\"o\">|</span><span class=\"w\"> </span><span class=\"n\">Bonny</span><span class=\"w\"> </span><span class=\"n\">Light</span><span class=\"w\"> </span><span class=\"o\">|</span><span class=\"w\"> </span><span class=\"mh\">2</span><span class=\"o\">%</span><span class=\"w\"> </span><span class=\"o\">|</span>\n</code></pre></div>\n<span class=\"paragraph\">| Forcados | 48% |\n| Qua Iboe | 0% |\n| Alaska North Slope | 50% |\n| Thunder Horse | 0% |</span>\n<div class=\"language-gdscript highlight\"><pre><span></span><code><span class=\"o\">*</span><span class=\"n\">Shocks</span><span class=\"w\"> </span><span class=\"n\">are</span><span class=\"w\"> </span><span class=\"n\">real</span><span class=\"w\"> </span><span class=\"n\">EIA</span><span class=\"w\"> </span><span class=\"n\">co</span><span class=\"o\">-</span><span class=\"n\">moves</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">block</span><span class=\"w\"> </span><span class=\"n\">bootstrap</span><span class=\"p\">);</span><span class=\"w\"> </span><span class=\"n\">petrochem</span><span class=\"w\"> </span><span class=\"n\">price</span><span class=\"w\"> </span><span class=\"n\">constant</span>\n<span class=\"p\">(</span><span class=\"n\">disclosed</span><span class=\"w\"> </span><span class=\"n\">placeholder</span><span class=\"p\">);</span><span class=\"w\"> </span><span class=\"n\">USD</span><span class=\"w\"> </span><span class=\"n\">single</span><span class=\"o\">-</span><span class=\"n\">period</span><span class=\"w\"> </span><span class=\"n\">price</span><span class=\"o\">-</span><span class=\"n\">taker</span><span class=\"w\"> </span><span class=\"err\">\u2014</span><span class=\"w\"> </span><span class=\"n\">no</span><span class=\"w\"> </span><span class=\"n\">FX</span><span class=\"o\">/</span><span class=\"n\">demand</span>\n<span class=\"n\">channel</span><span class=\"w\"> </span><span class=\"p\">(</span><span class=\"n\">spec</span><span class=\"w\"> </span><span class=\"err\">\u00a7</span><span class=\"mi\">7</span><span class=\"p\">)</span><span class=\"o\">.</span><span class=\"w\"> </span><span class=\"n\">Figures</span><span class=\"p\">:</span><span class=\"w\"> </span><span class=\"err\">`</span><span class=\"n\">docs</span><span class=\"o\">/</span><span class=\"n\">assets</span><span class=\"o\">/</span><span class=\"n\">margin_fan</span><span class=\"o\">.</span><span class=\"n\">png</span><span class=\"err\">`</span><span class=\"p\">,</span>\n<span class=\"err\">`</span><span class=\"n\">docs</span><span class=\"o\">/</span><span class=\"n\">assets</span><span class=\"o\">/</span><span class=\"n\">tornado_margin</span><span class=\"o\">.</span><span class=\"n\">png</span><span class=\"err\">`</span><span class=\"p\">;</span><span class=\"w\"> </span><span class=\"n\">full</span><span class=\"w\"> </span><span class=\"n\">summary</span><span class=\"p\">:</span>\n<span class=\"err\">`</span><span class=\"n\">data</span><span class=\"o\">/</span><span class=\"n\">derived</span><span class=\"o\">/</span><span class=\"n\">scenarios_phase5</span><span class=\"o\">.</span><span class=\"n\">json</span><span class=\"err\">`</span><span class=\"o\">.*</span>\n</code></pre></div></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "1fec9422aff55b12f0c489a74ab7346a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"market-ticker\">Market ticker</h2>\n<table>\n<thead>\n<tr>\n<th>Feed</th>\n<th>Value</th>\n<th>As of</th>\n<th>Status</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>NGN/USD FX</td>\n<td>1,328.37 \u20a6/$</td>\n<td>Wed, 23 Sep 2026 00:02:31 +0000</td>\n<td>\ud83d\udfe2 live</td>\n</tr>\n<tr>\n<td>WTI spot</td>\n<td>$107.02/bbl</td>\n<td>2026-09-15</td>\n<td>\ud83d\udfe2 live</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\"><em>Display-only context \u2014 neither feed enters the optimization (USD\nsingle-period price-taker, spec \u00a77). FX: open.er-api.com free tier,\ncached 1 h (provenance row 8); WTI: EIA daily spot (Cushing). \ud83d\udd35\nsnapshot = committed <code>data/derived/ticker_latest.json</code>, regenerated\n2026-09-23 via <code>scripts/refresh_ticker_snapshot.py</code>.</em></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "c44621e606d9e4b4f47b80097a41523e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><hr />\n<span class=\"paragraph\"><strong>Transparency:</strong> crude assays are real published data (TotalEnergies /\nExxonMobil sheets \u2014 <code>docs/data_provenance.md</code> row 3); delivered costs are\nanchored to the real EIA Brent spot average plus documented <strong>ASSUMED</strong>\nper-grade differentials (row 9, refresh: OPEC MOMR); gasoline/diesel/jet\nprices are real EIA USGC spot averages (row 2) \u2014 the <strong>petrochem pool\nprice is a disclosed PLACEHOLDER</strong> (no citable spot series exists).\nYields come from the Stage-1 TBP bridge and quality specs (RON/RVP/freeze/\ncetane) from <code>features/quality.py</code> \u2014 component values PUBLISHED where the\nsheets provide them, <strong>ASSUMED</strong> otherwise (<code>docs/methodology.md</code> \u00a73c).\nMethodology demo on public data \u2014 not Dangote's actual operations (spec \u00a77).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

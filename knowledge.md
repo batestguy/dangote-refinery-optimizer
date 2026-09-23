@@ -30,11 +30,24 @@ conventions, and settled decisions: `AGENTS.md`. Every number's provenance:
    pre-auth RCE via terminal WebSocket, fixed in 0.23.0; NVD confirms) —
    `uv.lock` already carried 0.24.2, so no lock churn; tests/ruff/marimo-check
    green. Was `marimo>=0.12`.
-2. HF Space deploy — **needs the user's HF account** (fork marimo template →
-   `app.py` + pinned `requirements.txt` from `uv.lock` → verify cold start
-   renders precomputed content <2 s). Deep re-opt is ~3 s, inside budget.
-3. Live ticker: NGN/USD FX (open.er-api.com, provenance row 8, cache 1 h) + WTI
-   spot — last live piece of the hybrid pricing decision (spec §4 decision 7).
+2. HF Space deploy — **needs the user's HF account** (create Docker Space →
+   push assembled root per `deploy/README.md` → verify cold start renders
+   precomputed content <2 s). **Prep done 2026-09-23:** `deploy/` kit ships
+   the Space `requirements.txt` (exact uv.lock versions, marimo 0.24.2),
+   verbatim template Dockerfile, and the user checklist. Deep re-opt is ~3 s,
+   inside budget.
+3. ✅ **DONE 2026-09-23:** Live ticker shipped — `data/ticker.py`: NGN/USD FX
+   (open.er-api.com, keyless, 1 h disk cache `data/raw/fx/`) + WTI spot via
+   new catalog entry `wti_spot_daily` (EIA `pri/spt` DAILY, product `EPCWTI`,
+   duoarea **`YCUOK`** — probed live, only area on route, like Brent's `ZEU`).
+   Both live-verified (FX 1,328.371; WTI $107.02 @ 2026-09-15). App cell
+   renders live→stale→snapshot with as-of dates; committed snapshot
+   `data/derived/ticker_latest.json` (`scripts/refresh_ticker_snapshot.py`)
+   = the cold-start fallback; display-only (never enters optimization).
+   10 new offline tests → **137 tests**. ⚠️ Gotchas: the box's network flaked
+   mid-smoke (FX ReadTimeout after curl succeeded seconds earlier — retry
+   before diagnosing); catalog lock test (`test_acquire.py`) must be extended
+   when adding any CATALOG series.
 4. HF Static Space portfolio page linking the app.
 
 **After Phase 6:** Phase 7 (blog post, exec summary, video, talking points) and
@@ -58,6 +71,24 @@ scipy vectorized-DE conventions, Brent-shift math, sidecar-based cache reads.
   `marimo-team/marimo-app-template` / create the Space; then `app.py` + pinned
   `requirements.txt` from `uv.lock`; cold-start test <2 s on precomputed cells).
 - Then: live FX/WTI ticker (Step 18 item 3), HF Static portfolio page (item 4).
+
+## Session Handover (2026-09-23b) — Phase 6: ticker + deploy prep
+- **Ticker DONE:** see HANDOFF item 3 above for the full detail (module,
+  facets, snapshot, tests). Key files: `src/dangote_opt/data/ticker.py`,
+  `scripts/refresh_ticker_snapshot.py`, app cell between the Phase 5 summary
+  and transparency footer, `tests/test_ticker.py` (10 tests, injectable
+  transports, zero network).
+- **Deploy kit DONE (`deploy/`):** Space `requirements.txt` (marimo==0.24.2
+  + exact numpy/pandas/pyarrow/scipy/scikit-learn/python-dotenv; joblib/
+  matplotlib/plotly/requests arrive transitively), template-verbatim
+  `Dockerfile`, `README.md` checklist. **User actions remain:** create the
+  Docker Space, push `app.py` + `src/` + `data/derived/` + the two deploy
+  files to the Space root, verify cold start <2 s, optionally add
+  `EIA_API_KEY` as a Space secret for live WTI.
+- **Docs updated same-commit:** provenance row 8 ✅ (FX + WTI verification
+  detail), CHANGELOG (ticker + deploy kit), setup-steps Step 18 items 2/3.
+- **Next up:** Step 18 item 2 user-side execution (HF account), then item 4
+  (HF Static portfolio page). Phase 7 write-ups follow Phase 6.
 
 ## Session Handover (2026-09-19h) — Phase 5 session
 - **Phase 5 DONE (2026-09-19h):** `optimization/scenarios.py` — 10k-draw Monte Carlo, **historical block bootstrap** (blocks of 12 consecutive months of EIA Δlog Brent+USGC, 2015–2025 — the brief's "what distribution / correlated shocks?" answered empirically; FX/demand = documented out-of-scope, USD price-taker). Per-draw **LP re-solve** via the Phase 4 skeleton (`build_lp_problem`/`solve_lp` — constraints price-independent, only `c` moves; ~8.5 ms/draw, 85 s total). ⚠️ Brent linkage: additive Δ = Brent_ref·(f−1) **cancels from the LP argmax** (Σx=1) — subtract from margin, never add to LP costs (differentials preserved). Results (`data/derived/scenarios_phase5.json`, seed 20260919): mean $17.68 ± 8.29, **VaR5 $6.25 / CVaR5 $1.42 / P(loss) 0.8%**; fixed-blend CVaR5 **−$3.50** → **re-opt worth +$2.56/bbl AND de-risks the tail**; two-regime diet ANS 50.5% / Forcados 47.9%. Fan + tornado figures in `docs/assets/`; app renders the precomputed summary (underscore-imports `_json`/`_Path` — marimo multi-cell collision workaround). `acquire.load_cached_series` = sidecar-located offline cache read (⚠️ cache-key reconstruction drifts when fetch params change — don't reconstruct). **127 tests.**

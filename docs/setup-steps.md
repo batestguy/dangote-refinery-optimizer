@@ -239,8 +239,14 @@ delivered; 127 tests; CI green.
 2. HF Space: fork the marimo template → copy `app/app.py` → pinned
    `requirements.txt` from `uv.lock` → verify cold start renders precomputed
    content <2 s. **Requires user's HF account.**
-3. Live ticker (provenance row 8): NGN/USD FX (open.er-api.com, cache 1 h) + WTI
-   spot — the last live piece of the hybrid pricing decision (spec §4 decision 7).
+   — prep done 2026-09-23: `deploy/` kit has the Space `requirements.txt`
+   (exact `uv.lock` versions) + the verbatim template Dockerfile + the deploy
+   checklist (`deploy/README.md`). Remaining actions are user-side (create the
+   Space, push the assembled root, watch the cold-start gate).
+3. ✅ (2026-09-23) Live ticker (provenance row 8): NGN/USD FX (open.er-api.com,
+   cache 1 h) + WTI spot (EIA daily `EPCWTI`/`YCUOK`, probed live) shipped in
+   `data/ticker.py` + app cell; snapshot fallback
+   `data/derived/ticker_latest.json` committed; 10 new tests (137 total).
 4. HF Static Space portfolio page linking to the app.
 
 ## Free-tier ledger (nothing above has a paid component)
@@ -251,4 +257,4 @@ delivered; 127 tests; CI green.
 | Colab | Free CPU | optional; everything runs locally |
 | EIA API | Free key | 5,000 req/h (cache-first parquet) |
 | HF datasets streaming | Free | no bulk download |
-| open.er-api.com FX (Step 18) | Free | fair use; cache 1 h |
+| open.er-api.com FX (Step 18 ✅) | Free | fair use; cache 1 h |

@@ -5,6 +5,25 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **Phase 6 live market ticker** (`data/ticker.py`, `scripts/refresh_ticker_snapshot.py`,
+  app cell): NGN/USD FX from open.er-api.com (provenance row 8, keyless, 1 h
+  disk cache) + WTI spot via a new `wti_spot_daily` EIA catalog entry
+  (`petroleum/pri/spt`, product `EPCWTI`, process `PF4`, duoarea **`YCUOK`**
+  — probed live 2026-09-23, the only area the product carries on this route;
+  same pattern as Brent's `ZEU`). Both feeds verified live (FX 1,328.371
+  NGN/USD; WTI $107.02 daily 2026-09-15); every failure mode degrades to a
+  timestamped stale/snapshot value — committed
+  `data/derived/ticker_latest.json` is the cold-start-safe fallback the app
+  renders on HF Spaces (refresh before each deploy). Display-only: neither
+  feed enters the optimization (USD price-taker, spec §7). 10 new offline
+  tests via injectable transports (137 total).
+- **HF Space deploy kit** (`deploy/`): Space `requirements.txt` pinned to the
+  exact `uv.lock` versions (marimo 0.24.2 — CVE-2026-39987 floor satisfied),
+  verbatim mirror of the official marimo template Dockerfile (Docker SDK,
+  port 7860, non-root user), and a deploy checklist with the cold-start
+  acceptance gate (precomputed content < 2 s) and a no-secrets-in-tree
+  verification step. Committing `data/derived/` artifacts is what makes the
+  Space render instantly on cold start — no pkl, no raw caches, no `.env`.
 - **Phase 5 scenario analysis** (`optimization/scenarios.py`,
   `scripts/run_scenarios.py`): 10,000-draw Monte Carlo over correlated price
   scenarios — historical block bootstrap (12-month blocks of EIA Δlog prices,

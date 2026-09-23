@@ -294,6 +294,67 @@ def _(mo):
 
 @app.cell
 def _(mo):
+    # Live ticker (Phase 6, provenance rows 2 + 8): NGN/USD FX (open.er-api.com,
+    # keyless, 1 h disk cache) + WTI spot (EIA daily, YCUOK). Live attempt first;
+    # graceful fallback to the committed snapshot (cold-start-safe on HF Spaces,
+    # where there is no EIA key and data/raw/ is not shipped). Every value is
+    # rendered with its as-of date — never a timestamp-less number.
+    import json as _tjson
+    from pathlib import Path as _tpath
+
+    from dotenv import dotenv_values as _dotenv_values
+
+    from dangote_opt.data.ticker import fetch_ngn_usd_rate as _fetch_fx
+    from dangote_opt.data.ticker import fetch_wti_spot as _fetch_wti
+
+    _snapshot = _tjson.loads(_tpath("data/derived/ticker_latest.json").read_text(encoding="utf-8"))
+
+    def _mark(live_q, snap_q):
+        """(quote, badge) — live quote if reachable, else the staged snapshot."""
+        if live_q is not None:
+            return live_q, "🟢 live" if not live_q.stale else "🟡 stale cache"
+        q = type("Q", (), {})()  # render the snapshot with the same shape
+        q.value, q.as_of, q.source = (
+            snap_q["value"],
+            snap_q["as_of"],
+            snap_q["source"],
+        )
+        return q, "🔵 snapshot"
+
+    _fx_live = _wti_live = None
+    try:
+        _fx_live = _fetch_fx()
+    except Exception:  # noqa: BLE001 — ticker must never break the dashboard
+        pass
+    try:
+        _wti_live = _fetch_wti(_dotenv_values(".env").get("EIA_API_KEY", "").strip())
+    except Exception:  # noqa: BLE001
+        pass
+
+    _fx, _fx_badge = _mark(_fx_live, _snapshot["quotes"]["ngn_usd"])
+    _wti, _wti_badge = _mark(_wti_live, _snapshot["quotes"]["wti_spot"])
+
+    mo.md(
+        f"""
+        ## Market ticker
+
+        | Feed | Value | As of | Status |
+        |---|---|---|---|
+        | NGN/USD FX | {_fx.value:,.2f} ₦/$ | {_fx.as_of} | {_fx_badge} |
+        | WTI spot | ${_wti.value:,.2f}/bbl | {_wti.as_of} | {_wti_badge} |
+
+        *Display-only context — neither feed enters the optimization (USD
+        single-period price-taker, spec §7). FX: open.er-api.com free tier,
+        cached 1 h (provenance row 8); WTI: EIA daily spot (Cushing). 🔵
+        snapshot = committed `data/derived/ticker_latest.json`, regenerated
+        {_snapshot["generated_utc"][:10]} via `scripts/refresh_ticker_snapshot.py`.*
+        """
+    )
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(
         """
         ---
