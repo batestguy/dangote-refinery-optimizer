@@ -156,10 +156,14 @@ def _(np):
         CONFIG,
         CRUDES,
         COSTS,
+        CRUDE_CUTS,
+        CURVES,
         PRICES,
+        PRICE_VEC,
         SC,
         SENS,
         SURROGATE_INFO,
+        crude_quals,
         objective,
         simplex_repair,
     )
@@ -191,8 +195,18 @@ def _(SC, SENS, SURROGATE_INFO, mo):
     if SURROGATE_INFO is not None:
         _min_r2 = min(m["r2"] for m in SURROGATE_INFO["cv_random_5fold"].values())
         model_kpi = f"{_min_r2:.3f}"
+        model_footnote = (
+            "Surrogate loaded (`models/etr_surrogate.pkl`, deterministic) — "
+            "dual-CV details incl. the leave-crude-out honesty finding: "
+            "`models/model_card.md`."
+        )
     else:
         model_kpi = "bridge¹"
+        model_footnote = (
+            "¹ Surrogate not trained in this environment "
+            "(`scripts/train_surrogate.py`, ~5 s, deterministic) — the app then "
+            "runs the exact bridge, same optimum."
+        )
 
     margin_kpi = f"${SC['base_margin']:.2f}/bbl"
     uplift_kpi = f"{SENS['uplift_vs_equal_weight']:+.1%}"
@@ -209,8 +223,7 @@ def _(SC, SENS, SURROGATE_INFO, mo):
         | **VaR(5%)** · CVaR(5%) · P(loss) — 10k scenarios | {risk_kpi} |
         | Surrogate 5-fold R² (min across products) | {model_kpi} |
 
-        ¹ Surrogate not trained in this environment (`scripts/train_surrogate.py`,
-        ~5 s, deterministic) — the app then runs the exact bridge, same optimum.
+        {model_footnote}
         """
     )
     return
@@ -363,8 +376,12 @@ def _(mo):
 def _(
     CONFIG,
     CRUDES,
+    CURVES,
+    PRICE_VEC,
     SURROGATE_INFO,
     baseline_severity,
+    crude_quals,
+    COSTS,
     mo,
     np,
     objective,
@@ -380,10 +397,14 @@ def _(
 
     # Phase 4 driver: vectorized DE over the exact batch paths + the mandatory
     # 3-way baseline table (equal-weight / random search / LP — spec §3.4).
+    # lp_inputs feeds the bridge-exact LP bar even when DE runs through the
+    # surrogate — the honest comparison the dashboard exists to show.
     from dangote_opt.optimization.de_driver import DE_BUDGET_S
     from dangote_opt.optimization.de_driver import optimize_blend as run_opt
 
-    result = run_opt(objective)
+    result = run_opt(
+        objective, lp_inputs=(CURVES, COSTS, PRICE_VEC, crude_quals)
+    )
     x, sev, margin_de = result.best_x, result.best_severity, result.best_margin
     x_eq = np.full(CONFIG.n_crudes, 1 / CONFIG.n_crudes)
     margin_eq = objective.margin(x_eq, baseline_severity.value)
