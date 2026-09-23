@@ -133,7 +133,8 @@ def assemble() -> Path:
             raise RuntimeError(f"missing required derived artifact: {name}")
         shutil.copy2(src, derived / name)
 
-    # 4. Risk figures the dashboard renders.
+    # 4. Risk figures + credited photos the dashboard renders (the hero photo
+    # is embedded in app.py as a data URI — the source file must ship with it).
     assets = SPACE_ROOT / "docs" / "assets"
     assets.mkdir(parents=True)
     for name in ("margin_fan.png", "tornado_margin.png"):
@@ -141,6 +142,13 @@ def assemble() -> Path:
         if not src.exists():
             raise RuntimeError(f"missing required figure: {name}")
         shutil.copy2(src, assets / name)
+    credited = assets / "credited"
+    credited.mkdir(parents=True)
+    for name in ("refinery_site_hero.jpg", "cdu_unit.jpg", "CREDITS.md"):
+        src = ROOT / "docs" / "assets" / "credited" / name
+        if not src.exists():
+            raise RuntimeError(f"missing required credited asset: {name}")
+        shutil.copy2(src, credited / name)
 
     # 5. Deploy files at root: requirements.txt, Dockerfile, Space README
     #    (the frontmatter SDK: docker is what makes HF build it as a Docker Space).

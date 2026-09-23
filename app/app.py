@@ -34,6 +34,15 @@ def _():
 def _(mo):
     # Design system — one <style> block, injected once, applies app-wide.
     # Plain string (NOT f-string): CSS braces would break f-string parsing.
+    # The hero photo (the actual Dangote site at Lekki, CC BY-SA 4.0) is
+    # embedded as a base64 data URI so it travels inside app.py — the file that
+    # deploys to HF Spaces unchanged — with zero extra requests at cold start.
+    import base64 as _base64
+    from pathlib import Path as _Path
+
+    hero_b64 = _base64.b64encode(
+        _Path("docs/assets/credited/refinery_site_hero.jpg").read_bytes()
+    ).decode()
     css = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
@@ -76,9 +85,10 @@ def _(mo):
 
     /* hero */
     .hero { border: 1px solid var(--border); border-left: 6px solid var(--amber);
-            background: linear-gradient(135deg, var(--surface) 0%,
-                        var(--surface-2) 100%);
-            border-radius: 14px; padding: 26px 28px; }
+            background: linear-gradient(105deg, rgba(15,13,11,.94) 0%,
+                        rgba(15,13,11,.86) 42%, rgba(15,13,11,.55) 100%),
+                        url('data:image/jpeg;base64,__HERO_B64__') center 38%/cover no-repeat;
+            border-radius: 14px; padding: 30px 30px; min-height: 230px; }
     .hero h1 { font-size: 44px; line-height: 1; margin: 0 0 6px;
                text-transform: uppercase; }
     .hero h1 .oil { color: var(--amber); }
@@ -149,13 +159,25 @@ def _(mo):
     /* footer */
     .foot { margin-top: 30px; border-top: 1px solid var(--border); padding-top: 12px;
             color: var(--muted); font-size: 12.5px; }
+    .photo { border-radius: 12px; border: 1px solid var(--border); width: 100%;
+             height: auto; display: block; }
+    .credit { font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+              margin-top: 5px; }
+    .credit a { color: var(--teal); }
+    .duo { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; }
+    @media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
+    .duo .cell { background: var(--surface); border: 1px solid var(--border);
+                 border-radius: 12px; padding: 10px 12px 12px; }
+    .duo .cap { font-size: 13px; color: var(--muted); margin-top: 8px;
+                line-height: 1.5; }
+    .duo .cap b { color: var(--text); }
     .foot a { color: var(--teal); }
     .deerflow { font-family: var(--mono); font-size: 11px; color: var(--muted);
                 opacity: .75; text-decoration: none; }
     .deerflow:hover { opacity: 1; color: var(--amber); }
     </style>
     """
-    mo.Html(css)
+    mo.Html(css.replace("__HERO_B64__", hero_b64))
     return
 
 
@@ -458,11 +480,17 @@ def _(mo):
 
 
 @app.cell
-def _(SC, mo):
-    # 03 · Charts — dark plotly template matching the console.
+def _(SC, mo):    # 03 · Charts — dark plotly template matching the console.
+    import base64 as _cbase64
+    from pathlib import Path as _cPath
+
     import plotly.express as _px
     import plotly.graph_objects as _go
     import plotly.io as _pio
+
+    _cdu_b64 = _cbase64.b64encode(
+        _cPath("docs/assets/credited/cdu_unit.jpg").read_bytes()
+    ).decode()
 
     _pio.templates["console"] = _go.layout.Template(
         layout=_go.Layout(
@@ -502,15 +530,42 @@ def _(SC, mo):
 
     _diet = sorted(SC["base_blend"].items(), key=lambda kv: -kv[1])
     _switch = sorted(SC["switch_share"].items(), key=lambda kv: -kv[1])
+    _cdu_note = (
+        '<div class="cap" style="margin-top:2px"><b style="font-size:15px">'
+        "The choice at a glance</b></div>"
+        '<table style="margin-top:6px">'
+        "<tr><th>Decision</th><th>Optimum</th></tr>"
+        f"<tr><td>Diet (base)</td><td>{_diet[0][0]} {_diet[0][1]:.0%}</td></tr>"
+        "<tr><td>FCC severity</td><td>1.00 — max conversion</td></tr>"
+        f"<tr><td>Margin</td><td><b>${SC['base_margin']:.2f}/bbl</b></td></tr>"
+        "<tr><td>Honest bar</td><td>exact LP — met to &lt;$0.005</td></tr>"
+        "</table>"
+        '<div class="cap">Why one crude? The optimizer buys the barrel with the '
+        "best margin — ANS&#39;s sour discount beats the sweetening cost. "
+        "Section 04 shows when that flips.</div>"
+    )
+    _section03 = (
+        '<div class="sec"><span class="idx">03</span><div>'
+        "<h2>What the optimizer chose</h2>"
+        '<p class="sub">Left: the single best diet at base prices. Right: '
+        "how often each crude is optimal across 10,000 price scenarios — "
+        "the diet genuinely switches with prices.</p></div></div>"
+        '<div class="duo">'
+        '<div class="cell">'
+        '<img class="photo" src="data:image/jpeg;base64,__CDU_B64__" '
+        'alt="Crude distillation unit, Dangote Refinery, Lekki">'
+        '<div class="cap"><b>The crude distillation unit at Lekki</b> — the '
+        "real plant whose behavior our severity variable mimics: the FCC "
+        "converts 40→80% of the VGO cut as severity rises (cited range)."
+        '</div><div class="credit">Photo: FrankvEck, CC BY-SA 4.0, via '
+        '<a href="https://commons.wikimedia.org/wiki/File:Crude_oil_distillation_unit_at_Lekki.jpg" '
+        'target="_blank">Wikimedia Commons</a></div>'
+        "</div>"
+        '<div class="cell">' + _cdu_note + "</div></div>"
+    ).replace("__CDU_B64__", _cdu_b64)
     mo.vstack(
         [
-            mo.Html(
-                '<div class="sec"><span class="idx">03</span><div>'
-                "<h2>What the optimizer chose</h2>"
-                '<p class="sub">Left: the single best diet at base prices. Right: '
-                "how often each crude is optimal across 10,000 price scenarios — "
-                "the diet genuinely switches with prices.</p></div></div>"
-            ),
+            mo.Html(_section03),
             _bar(_diet, "#e8a33d", lambda v: f"{v:.1f}%"),
             _bar(_switch, "#2dd4bf", lambda v: f"{v:.1f}%" if v >= 1 else f"{v:.1f}%"),
             mo.Html(
