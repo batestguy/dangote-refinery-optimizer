@@ -88,6 +88,29 @@ scipy vectorized-DE conventions, Brent-shift math, sidecar-based cache reads.
   imports it directly) + `plotly` (dashboard charts) explicitly.
 - **Next up: unchanged** — Step 18 item 2 user-side HF Space execution.
 
+## Session Handover (2026-09-23e) — dashboard redesign (control-room console)
+- **Design system shipped** (`app/app.py`): dark warm-graphite console
+  (bg #0f0d0b, amber crude accents, Barlow Condensed + IBM Plex Mono via
+  Google Fonts, async-load safe), KPI tiles, numbered section banners
+  (01–06 + ▶ result) with "what you're looking at" captions, START-here
+  stepper, dark Plotly template (`pio.templates['console']`), how-to-read
+  callouts, ticker legend, waiting-prompt card. Directional-first per user
+  brief. One `<style>` cell injected via `mo.Html` (plain string — CSS
+  braces break f-strings).
+- **marimo shell theming gotchas (cost 3 probe cycles — record!):** the
+  white is painted by (1) `.bg-background` Tailwind token (gutters) and
+  (2) EACH `.marimo-cell` wrapper (white under content). Override both with
+  `!important`; find painters via `document.elementsFromPoint(x,y)` eval,
+  verify with screenshot pixel probes (PIL), never via guessed selectors.
+- **Lint:** `app/app.py` gets per-file-ignores E501 in pyproject (HTML/URL
+  lines); `marimo check` now FULLY clean (HTML cells ended the
+  markdown-indentation warning pattern). ⚠️ `git add -A` swept in
+  `.playwright-cli/` + `output/` once — both now gitignored; browser-
+  verification artifacts stay untracked.
+- **Verified:** all-shell pixel probe dark=True, 137 tests, ruff, marimo
+  check 0 issues, Space assembly green. Local preview: `uv run marimo run
+  app/app.py` (user's browser session on port 2718 was live).
+
 ## Session Handover (2026-09-23d) — deploy pipeline + Phase 7 drafts
 - **Space assembly pipeline DONE:** `scripts/build_space_root.py` →
   `deploy/space_root/` (gitignored build artifact, 38 files: app.py, src/,
