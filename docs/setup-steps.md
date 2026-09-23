@@ -231,9 +231,11 @@ its acceptance criteria and the honest findings encountered.
 **Accept:** 10k iterations with per-scenario re-optimization; VaR/CVaR/tornado
 delivered; 127 tests; CI green.
 
-## Step 18 — Phase 6 (next, not started)
-1. Pin the CVE-2026-39987-patched marimo release in `pyproject.toml` (spec open
-   item 5) and re-run CI.
+## Step 18 — Phase 6 (in progress — item 1 done 2026-09-23)
+1. ✅ (2026-09-23) CVE-2026-39987-patched marimo floor pinned in `pyproject.toml`:
+   `marimo>=0.23.0` (vulnerability = pre-auth RCE via terminal WebSocket,
+   fixed in 0.23.0); `uv.lock` carries 0.24.2 — no lock churn. CI gates green
+   locally (127 tests, ruff, `marimo check`).
 2. HF Space: fork the marimo template → copy `app/app.py` → pinned
    `requirements.txt` from `uv.lock` → verify cold start renders precomputed
    content <2 s. **Requires user's HF account.**

@@ -2,7 +2,9 @@
 
 ## ★ HANDOFF (2026-09-19, end of day) — READ THIS FIRST
 
-**State: Phases 0–5 complete, CI green, 127 tests. Awaiting the Phase 6 go.**
+**State: Phases 0–5 complete, CI green, 127 tests. Phase 6 in progress —
+marimo CVE pin DONE (2026-09-23); next blocker is the HF Space, which needs
+the user's HF account.**
 
 All five modeling phases shipped in one day (2026-09-18 → 09-19), every phase
 with its own commit, docs, and tests; the full execution log with acceptance
@@ -24,8 +26,10 @@ conventions, and settled decisions: `AGENTS.md`. Every number's provenance:
 | DE runtime | 0.85 s bridge / 3.4 s surrogate (was 127 s) | 30–60 s budget, 20× headroom |
 
 **Next: Phase 6 (dashboard & deploy)** — in order:
-1. Pin the CVE-2026-39987-patched marimo release in `pyproject.toml` (spec open
-   item 5; floor is `marimo>=0.12` today) → CI.
+1. ✅ **DONE 2026-09-23:** marimo floor pinned `>=0.23.0` (CVE-2026-39987 =
+   pre-auth RCE via terminal WebSocket, fixed in 0.23.0; NVD confirms) —
+   `uv.lock` already carried 0.24.2, so no lock churn; tests/ruff/marimo-check
+   green. Was `marimo>=0.12`.
 2. HF Space deploy — **needs the user's HF account** (fork marimo template →
    `app.py` + pinned `requirements.txt` from `uv.lock` → verify cold start
    renders precomputed content <2 s). Deep re-opt is ~3 s, inside budget.
@@ -42,6 +46,18 @@ Maples rejection, FCCU-dataset supersession, slate substitution, ETR size,
 scipy vectorized-DE conventions, Brent-shift math, sidecar-based cache reads.
 
 ---
+
+## Session Handover (2026-09-23) — Phase 6 kickoff
+- **marimo CVE pin DONE:** `pyproject.toml` floor raised `>=0.12` → `>=0.23.0`
+  (CVE-2026-39987 pre-auth RCE, fixed 0.23.0; installed 0.24.2 satisfies —
+  `uv.lock` untouched, verified with `uv lock --check`). Rationale recorded:
+  the old floor would resolve a *vulnerable* release on a fresh clone or the
+  HF Space build even though the dev env was patched. Docs updated same commit
+  (CHANGELOG `Changed`, setup-steps Step 18 item 1 ✅). 127 tests green.
+- **Next up: Step 18 item 2** — HF Space deploy (user must fork
+  `marimo-team/marimo-app-template` / create the Space; then `app.py` + pinned
+  `requirements.txt` from `uv.lock`; cold-start test <2 s on precomputed cells).
+- Then: live FX/WTI ticker (Step 18 item 3), HF Static portfolio page (item 4).
 
 ## Session Handover (2026-09-19h) — Phase 5 session
 - **Phase 5 DONE (2026-09-19h):** `optimization/scenarios.py` — 10k-draw Monte Carlo, **historical block bootstrap** (blocks of 12 consecutive months of EIA Δlog Brent+USGC, 2015–2025 — the brief's "what distribution / correlated shocks?" answered empirically; FX/demand = documented out-of-scope, USD price-taker). Per-draw **LP re-solve** via the Phase 4 skeleton (`build_lp_problem`/`solve_lp` — constraints price-independent, only `c` moves; ~8.5 ms/draw, 85 s total). ⚠️ Brent linkage: additive Δ = Brent_ref·(f−1) **cancels from the LP argmax** (Σx=1) — subtract from margin, never add to LP costs (differentials preserved). Results (`data/derived/scenarios_phase5.json`, seed 20260919): mean $17.68 ± 8.29, **VaR5 $6.25 / CVaR5 $1.42 / P(loss) 0.8%**; fixed-blend CVaR5 **−$3.50** → **re-opt worth +$2.56/bbl AND de-risks the tail**; two-regime diet ANS 50.5% / Forcados 47.9%. Fan + tornado figures in `docs/assets/`; app renders the precomputed summary (underscore-imports `_json`/`_Path` — marimo multi-cell collision workaround). `acquire.load_cached_series` = sidecar-located offline cache read (⚠️ cache-key reconstruction drifts when fetch params change — don't reconstruct). **127 tests.**

@@ -99,6 +99,15 @@ All notable changes to this project. Format based on Keep a Changelog.
   published assays with bridge yields (costs still placeholder until row 9).
 - 11 new tests (73 total).
 
+### Changed
+- **marimo floor pinned at 0.23.0** (Phase 6 kickoff, spec open item 5):
+  CVE-2026-39987 — pre-auth RCE via marimo's terminal WebSocket endpoint — is
+  fixed in 0.23.0, and the old `>=0.12` floor would resolve a vulnerable
+  release on a fresh clone or the HF Space build. `uv.lock` carries 0.24.2,
+  already above the new floor, so no lock churn and no behavioral change;
+  127 tests, ruff, and `marimo check` all green after the pin (the 1 cosmetic
+  check warning is pre-existing).
+
 ### Fixed
 - Phase 1 data layer: EIA Open Data v2 client (`data/acquire.py`) with
   cache-first parquet + provenance sidecars (key never persisted), page
