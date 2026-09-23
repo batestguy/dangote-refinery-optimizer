@@ -1,17 +1,21 @@
-"""Dangote Refinery Blend Optimizer — marimo app (POC).
+"""Dangote Refinery Blend Optimizer — marimo dashboard (Phase 6).
 
-The file that deploys to HuggingFace Spaces unchanged (Phase 6, spec §3.7).
+The file that deploys to HuggingFace Spaces unchanged (spec §3.7).
 Runs locally with:  uv run marimo run app/app.py
 
-Yields come from the Stage-1 TBP bridge (real published assays) and costs from
-the EIA Brent anchor + documented differentials; product prices remain
-placeholder until the EIA USGC series is wired in. Methodology-demo outputs,
-not real Dangote data.
+Cold-start discipline (HF Spaces sleep ~48 h): the page renders its whole
+static story from committed artifacts first — KPI strip, market ticker,
+optimal-diet and regime-switch charts, scenario-risk table, fan/tornado
+figures — and only the deep re-opt waits for a button click. Live feeds
+(FX/WTI) degrade to timestamped stale/snapshot values; nothing on the page
+ever shows a number without its provenance badge or as-of date.
+
+Methodology demo on public data — not real Dangote operations (spec §7).
 """
 
 import marimo
 
-__generated_with = "0.12.0"
+__generated_with = "0.24.2"
 app = marimo.App(width="medium")
 
 
@@ -143,16 +147,204 @@ def _(np):
         batch_yields=BATCH_YIELDS,
         batch_quality=BatchQualityModel.from_slate(CURVES, crude_quals),
     )
+
+    # Precomputed Phase 4/5 artifacts — the cold-start-safe story layer.
+    SC = json.loads(Path("data/derived/scenarios_phase5.json").read_text(encoding="utf-8"))
+    SENS = json.loads(Path("data/derived/sensitivity_phase4.json").read_text(encoding="utf-8"))
+
     return (
         CONFIG,
         CRUDES,
         COSTS,
         PRICES,
+        SC,
+        SENS,
         SURROGATE_INFO,
         objective,
-        quality_model,
         simplex_repair,
     )
+
+
+@app.cell
+def _(CONFIG, mo):
+    mo.md(
+        f"""
+        # Dangote Refinery Blend Optimizer
+
+        **Crude-blend + FCC-severity optimization at refinery scale** —
+        {CONFIG.n_crudes} real published crude assays, a cited TBP cut-point
+        bridge to {len(CONFIG.products)} product pools, quality specs with real
+        teeth (RON / RVP / freeze / cetane), and a differential-evolution
+        optimizer benchmarked against an exact LP.
+
+        *Methodology demo on free/open data — provenance for every number in
+        `docs/methodology.md`; not Dangote's actual operations (spec §7).*
+        """
+    )
+    return
+
+
+@app.cell
+def _(SC, SENS, SURROGATE_INFO, mo):
+    # Headline KPI strip — every value precomputed in committed artifacts, so
+    # this renders instantly on a sleeping Space (no model load, no network).
+    if SURROGATE_INFO is not None:
+        _min_r2 = min(m["r2"] for m in SURROGATE_INFO["cv_random_5fold"].values())
+        model_kpi = f"{_min_r2:.3f}"
+    else:
+        model_kpi = "bridge¹"
+
+    margin_kpi = f"${SC['base_margin']:.2f}/bbl"
+    uplift_kpi = f"{SENS['uplift_vs_equal_weight']:+.1%}"
+    reopt_kpi = f"+${SC['reopt_value_mean']:.2f}/bbl"
+    risk_kpi = f"${SC['var_pct']:.2f} · ${SC['cvar_pct']:.2f} · {SC['probability_of_loss']:.1%}"
+
+    mo.md(
+        f"""
+        | Headline (precomputed, deterministic) | Value |
+        |---|---|
+        | **Blend margin** — LP optimum, base prices | **{margin_kpi}** |
+        | **Uplift vs equal-weight blend** (100-seed sweep) | **{uplift_kpi}** |
+        | **Value of re-optimization** under price shocks | **{reopt_kpi}** |
+        | **VaR(5%)** · CVaR(5%) · P(loss) — 10k scenarios | {risk_kpi} |
+        | Surrogate 5-fold R² (min across products) | {model_kpi} |
+
+        ¹ Surrogate not trained in this environment (`scripts/train_surrogate.py`,
+        ~5 s, deterministic) — the app then runs the exact bridge, same optimum.
+        """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    # Live ticker (Phase 6, provenance rows 2 + 8): NGN/USD FX (open.er-api.com,
+    # keyless, 1 h disk cache) + WTI spot (EIA daily, YCUOK). Live attempt first;
+    # graceful fallback to the committed snapshot (cold-start-safe on HF Spaces,
+    # where there is no EIA key and data/raw/ is not shipped). Every value is
+    # rendered with its as-of date — never a timestamp-less number.
+    import json as _tjson
+    from pathlib import Path as _tpath
+
+    from dotenv import dotenv_values as _dotenv_values
+
+    from dangote_opt.data.ticker import fetch_ngn_usd_rate as _fetch_fx
+    from dangote_opt.data.ticker import fetch_wti_spot as _fetch_wti
+
+    _snapshot = _tjson.loads(_tpath("data/derived/ticker_latest.json").read_text(encoding="utf-8"))
+
+    def _mark(live_q, snap_q):
+        """(quote, badge) — live quote if reachable, else the staged snapshot."""
+        if live_q is not None:
+            return live_q, "🟢 live" if not live_q.stale else "🟡 stale cache"
+        q = type("Q", (), {})()  # render the snapshot with the same shape
+        q.value, q.as_of, q.source = (
+            snap_q["value"],
+            snap_q["as_of"],
+            snap_q["source"],
+        )
+        return q, "🔵 snapshot"
+
+    _fx_live = _wti_live = None
+    try:
+        _fx_live = _fetch_fx()
+    except Exception:  # noqa: BLE001 — ticker must never break the dashboard
+        pass
+    try:
+        _wti_live = _fetch_wti(_dotenv_values(".env").get("EIA_API_KEY", "").strip())
+    except Exception:  # noqa: BLE001
+        pass
+
+    _fx, _fx_badge = _mark(_fx_live, _snapshot["quotes"]["ngn_usd"])
+    _wti, _wti_badge = _mark(_wti_live, _snapshot["quotes"]["wti_spot"])
+
+    mo.md(
+        f"""
+        ## Market ticker
+
+        | Feed | Value | As of | Status |
+        |---|---|---|---|
+        | NGN/USD FX | {_fx.value:,.2f} ₦/$ | {_fx.as_of} | {_fx_badge} |
+        | WTI spot | ${_wti.value:,.2f}/bbl | {_wti.as_of} | {_wti_badge} |
+
+        *Display-only context — neither feed enters the optimization (USD
+        single-period price-taker, spec §7). FX: open.er-api.com free tier,
+        cached 1 h (provenance row 8); WTI: EIA daily spot (Cushing). 🔵
+        snapshot = committed `data/derived/ticker_latest.json`, regenerated
+        {_snapshot["generated_utc"][:10]} via `scripts/refresh_ticker_snapshot.py`.*
+        """
+    )
+    return
+
+
+@app.cell
+def _(SC, mo):
+    # Blend story as charts — both from the committed Phase 5 artifact.
+    import plotly.express as _px
+
+    _diet = sorted(SC["base_blend"].items(), key=lambda kv: -kv[1])
+
+    def _bar(pairs, title):
+        fig = _px.bar(
+            x=[k for k, _ in pairs],
+            y=[v * 100 for _, v in pairs],
+            text=[f"{v * 100:.1f}%" for _, v in pairs],
+        )
+        fig.update_layout(
+            title=title,
+            template="plotly_white",
+            yaxis_title="share (%)",
+            margin=dict(t=48, r=16, b=16),
+            height=340,
+        )
+        fig.update_yaxes(range=[0, 105])
+        return fig
+
+    _diet_fig = _bar(_diet, "Optimal crude diet (base economics, LP — severity 1.0)")
+    _switch = sorted(SC["switch_share"].items(), key=lambda kv: -kv[1])
+    _switch_fig = _bar(
+        _switch, "Regime switch — share of 10k price scenarios each crude is optimal in"
+    )
+    mo.vstack([_diet_fig, _switch_fig])
+    return
+
+
+@app.cell
+def _(mo):
+    # Scenario risk (Phase 5) — precomputed table + the committed fan/tornado
+    # figures, which the dashboard previously never rendered.
+    import json as _sjson
+    from pathlib import Path as _spath
+
+    import marimo as _mo_img
+
+    summary = _sjson.loads(_spath("data/derived/scenarios_phase5.json").read_text(encoding="utf-8"))
+    p_loss = summary["probability_of_loss"]
+    _risk_md = _mo_img.md(
+        f"""
+        ## Scenario risk (10,000 correlated price scenarios)
+
+        Historical block bootstrap over real EIA monthly co-moves (Brent + USGC
+        products, 2015–2025); each draw **re-optimizes the blend** via the exact
+        LP. Precomputed summary (`scripts/run_scenarios.py`, deterministic,
+        seed {summary["seed"]}):
+
+        | Metric (re-optimized per draw) | Value |
+        |---|---|
+        | Base margin | ${summary["base_margin"]:.2f}/bbl |
+        | Mean ± σ | ${summary["mean_margin"]:.2f} ± {summary["margin_std"]:.2f} |
+        | **VaR 5%** | ${summary["var_pct"]:.2f} |
+        | **CVaR 5%** | ${summary["cvar_pct"]:.2f} |
+        | P(loss) | {p_loss:.1%} |
+        | Fixed-blend mean (no re-opt) | ${summary["fixed_blend_mean"]:.2f} |
+        | **Value of re-optimization** | **${summary["reopt_value_mean"]:.2f}/bbl** |
+        | Fixed-blend CVaR 5% | ${summary["fixed_cvar_pct"]:.2f} (vs {summary["cvar_pct"]:.2f}) |
+        """
+    )
+    _fan = _mo_img.image("docs/assets/margin_fan.png", width=720)
+    _tornado = _mo_img.image("docs/assets/tornado_margin.png", width=720)
+    mo.vstack([_risk_md, _fan, _tornado])
+    return
 
 
 @app.cell
@@ -224,7 +416,10 @@ def _(
     )
     mo.md(
         f"""
-        ### Optimal crude diet (bridge yields · Brent costs · USGC prices · quality specs)
+        ### Deep re-optimization (live run)
+
+        *Bridge yields · Brent costs · USGC prices · quality specs*
+
         | Crude | Blend share |
         |---|---|
         {rows}
@@ -248,107 +443,63 @@ def _(
 
 
 @app.cell
-def _(mo):
-    import json as _json
-    from pathlib import Path as _Path
-
-    summary = _json.loads(_Path("data/derived/scenarios_phase5.json").read_text(encoding="utf-8"))
-    sw = summary["switch_share"]
-    switch_rows = "\n".join(f"| {n} | {s:.0%} |" for n, s in sw.items())
-    p_loss = summary["probability_of_loss"]
-    mo.md(
-        f"""
-        ## Scenario risk (Phase 5 — 10,000 correlated price scenarios)
-
-        Historical block bootstrap over real EIA monthly co-moves (Brent + USGC
-        products, 2015–2025); each draw **re-optimizes the blend** via the exact
-        LP. Precomputed summary (`scripts/run_scenarios.py`, deterministic,
-        seed {summary["seed"]}):
-
-        | Metric (re-optimized per draw) | Value |
-        |---|---|
-        | Base margin | ${summary["base_margin"]:.2f}/bbl |
-        | Mean ± σ | ${summary["mean_margin"]:.2f} ± {summary["margin_std"]:.2f} |
-        | **VaR 5%** | ${summary["var_pct"]:.2f} |
-        | **CVaR 5%** | ${summary["cvar_pct"]:.2f} |
-        | P(loss) | {p_loss:.1%} |
-        | Fixed-blend mean (no re-opt) | ${summary["fixed_blend_mean"]:.2f} |
-        | **Value of re-optimization** | **${summary["reopt_value_mean"]:.2f}/bbl** |
-        | Fixed-blend CVaR 5% | ${summary["fixed_cvar_pct"]:.2f} (vs {summary["cvar_pct"]:.2f}) |
-
-        **Blend regime switch share** (share of scenarios each crude is optimal in):
-
-        | Crude | Optimal in |
-        |---|---|
-        {switch_rows}
-
-        *Shocks are real EIA co-moves (block bootstrap); petrochem price constant
-        (disclosed placeholder); USD single-period price-taker — no FX/demand
-        channel (spec §7). Figures: `docs/assets/margin_fan.png`,
-        `docs/assets/tornado_margin.png`; full summary:
-        `data/derived/scenarios_phase5.json`.*
-        """
-    )
-    return
-
-
-@app.cell
-def _(mo):
-    # Live ticker (Phase 6, provenance rows 2 + 8): NGN/USD FX (open.er-api.com,
-    # keyless, 1 h disk cache) + WTI spot (EIA daily, YCUOK). Live attempt first;
-    # graceful fallback to the committed snapshot (cold-start-safe on HF Spaces,
-    # where there is no EIA key and data/raw/ is not shipped). Every value is
-    # rendered with its as-of date — never a timestamp-less number.
-    import json as _tjson
-    from pathlib import Path as _tpath
-
-    from dotenv import dotenv_values as _dotenv_values
-
-    from dangote_opt.data.ticker import fetch_ngn_usd_rate as _fetch_fx
-    from dangote_opt.data.ticker import fetch_wti_spot as _fetch_wti
-
-    _snapshot = _tjson.loads(_tpath("data/derived/ticker_latest.json").read_text(encoding="utf-8"))
-
-    def _mark(live_q, snap_q):
-        """(quote, badge) — live quote if reachable, else the staged snapshot."""
-        if live_q is not None:
-            return live_q, "🟢 live" if not live_q.stale else "🟡 stale cache"
-        q = type("Q", (), {})()  # render the snapshot with the same shape
-        q.value, q.as_of, q.source = (
-            snap_q["value"],
-            snap_q["as_of"],
-            snap_q["source"],
+def _(PRICES, SURROGATE_INFO, mo):
+    # Assumptions & methodology — collapsed by default so the story stays clean
+    # but every number's provenance is one click away.
+    if SURROGATE_INFO is not None:
+        lco_note = (
+            "Leave-crude-out honesty finding: jet R² collapses to "
+            f"{SURROGATE_INFO['cv_leave_crude_out']['yield_jet']['r2']:.2f} — trees cannot "
+            "extrapolate below a held-out crude's range; deployment never needs "
+            "unseen crudes (models/model_card.md)."
         )
-        return q, "🔵 snapshot"
+    else:
+        lco_note = "Surrogate metrics available in models/model_card.md."
 
-    _fx_live = _wti_live = None
-    try:
-        _fx_live = _fetch_fx()
-    except Exception:  # noqa: BLE001 — ticker must never break the dashboard
-        pass
-    try:
-        _wti_live = _fetch_wti(_dotenv_values(".env").get("EIA_API_KEY", "").strip())
-    except Exception:  # noqa: BLE001
-        pass
-
-    _fx, _fx_badge = _mark(_fx_live, _snapshot["quotes"]["ngn_usd"])
-    _wti, _wti_badge = _mark(_wti_live, _snapshot["quotes"]["wti_spot"])
-
-    mo.md(
-        f"""
-        ## Market ticker
-
-        | Feed | Value | As of | Status |
-        |---|---|---|---|
-        | NGN/USD FX | {_fx.value:,.2f} ₦/$ | {_fx.as_of} | {_fx_badge} |
-        | WTI spot | ${_wti.value:,.2f}/bbl | {_wti.as_of} | {_wti_badge} |
-
-        *Display-only context — neither feed enters the optimization (USD
-        single-period price-taker, spec §7). FX: open.er-api.com free tier,
-        cached 1 h (provenance row 8); WTI: EIA daily spot (Cushing). 🔵
-        snapshot = committed `data/derived/ticker_latest.json`, regenerated
-        {_snapshot["generated_utc"][:10]} via `scripts/refresh_ticker_snapshot.py`.*
-        """
+    mo.accordion(
+        {
+            "## Model & validation": mo.md(
+                f"""
+                - **Stage-1 bridge:** TBP cut-point integration + FCC conversion
+                40→80% linear in severity (Gary & Handwerk cited ranges);
+                ground-truthed to ±0.2 vol% vs published cut tables.
+                - **Surrogate:** ETR 150×14×4, dual CV — random 5-fold (headline)
+                + leave-crude-out (honesty), always reported together. {lco_note}
+                - **DE = LP to <$0.005/bbl:** the bridge physics are affine in
+                severity, so the exact LP is the honest bar and DE meets it
+                (methodology §6a) — the "is DE actually earning its keep?"
+                question is answered structurally, not rhetorically.
+                """
+            ),
+            "## Data provenance (real vs assumed)": mo.md(
+                f"""
+                - **REAL:** crude assays (TotalEnergies / ExxonMobil sheets, row 3);
+                product prices — gasoline ${PRICES.get("gasoline", float("nan")):.2f} /
+                diesel ${PRICES.get("diesel", float("nan")):.2f} / jet
+                ${PRICES.get("jet", float("nan")):.2f}/bbl (EIA USGC 12-mo, row 2);
+                Brent cost anchor $69.10/bbl (row 9).
+                - **ASSUMED:** per-grade differentials (quality-rationale table in
+                `data/costs.py`; refresh path: OPEC MOMR actuals).
+                - **PLACEHOLDER:** petrochem pool price (no citable EIA spot for the
+                LPG/propylene/residue basket — probed; documented in prices.py).
+                - Every constant cited in `docs/methodology.md`; nothing invented
+                silently.
+                """
+            ),
+            "## Reproduce everything": mo.md(
+                """
+                ```bash
+                uv sync                                        # locked env (uv.lock committed)
+                PYTHONUTF8=1 uv run pytest                     # 137 offline tests
+                PYTHONUTF8=1 uv run python scripts/train_surrogate.py    # ~5 s, deterministic
+                PYTHONUTF8=1 uv run python scripts/sensitivity_study.py  # 100 DE seeds
+                PYTHONUTF8=1 uv run python scripts/run_scenarios.py      # 10k Monte Carlo
+                ```
+                All randomness is seeded (20260919 / 42); artifacts in
+                `data/derived/` are committed and regenerate byte-identically.
+                """
+            ),
+        }
     )
     return
 
@@ -358,16 +509,11 @@ def _(mo):
     mo.md(
         """
         ---
-        **Transparency:** crude assays are real published data (TotalEnergies /
-        ExxonMobil sheets — `docs/data_provenance.md` row 3); delivered costs are
-        anchored to the real EIA Brent spot average plus documented **ASSUMED**
-        per-grade differentials (row 9, refresh: OPEC MOMR); gasoline/diesel/jet
-        prices are real EIA USGC spot averages (row 2) — the **petrochem pool
-        price is a disclosed PLACEHOLDER** (no citable spot series exists).
-        Yields come from the Stage-1 TBP bridge and quality specs (RON/RVP/freeze/
-        cetane) from `features/quality.py` — component values PUBLISHED where the
-        sheets provide them, **ASSUMED** otherwise (`docs/methodology.md` §3c).
-        Methodology demo on public data — not Dangote's actual operations (spec §7).
+        **Transparency:** methodology demo on public data — not Dangote's actual
+        operations. Real: assays, EIA USGC product prices, Brent anchor, FX/WTI
+        ticker context. Assumed/placeholders as disclosed above and in
+        `docs/data_provenance.md`. Repo:
+        [batestguy/dangote-refinery-optimizer](https://github.com/batestguy/dangote-refinery-optimizer).
         """
     )
     return

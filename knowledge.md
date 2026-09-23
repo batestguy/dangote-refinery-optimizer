@@ -72,6 +72,22 @@ scipy vectorized-DE conventions, Brent-shift math, sidecar-based cache reads.
   `requirements.txt` from `uv.lock`; cold-start test <2 s on precomputed cells).
 - Then: live FX/WTI ticker (Step 18 item 3), HF Static portfolio page (item 4).
 
+## Session Handover (2026-09-23c) — Phase 6: dashboard rebuild
+- **Dashboard rebuilt cold-start-first** (`app/app.py`): header → precomputed
+  KPI strip (Phase 4/5 JSONs — no model load, no network) → ticker → diet/
+  regime-switch plotly bars (`base_blend`/`switch_share`) → risk table + the
+  previously-unrendered fan/tornado PNGs (`mo.image`) → deep re-opt →
+  assumptions accordions → footer. ⚠️ Gotchas learned: (1) model-card LCO keys
+  are `yield_jet`-prefixed, not `jet` — don't index from memory (KeyError'd a
+  cell; headless export caught it); (2) plain triple-quoted `mo.md` strings
+  trigger marimo's markdown-indentation warning — make headings data-driven
+  f-strings instead; (3) marimo format subcommand doesn't exist in 0.24.x.
+  Verified BOTH model paths via `marimo export html` (pkl present + pkl
+  hidden = the Space condition: bridge footnote KPI, bridge-path DE, fallback
+  model note). `deploy/requirements.txt` now carries `requests` (ticker
+  imports it directly) + `plotly` (dashboard charts) explicitly.
+- **Next up: unchanged** — Step 18 item 2 user-side HF Space execution.
+
 ## Session Handover (2026-09-23b) — Phase 6: ticker + deploy prep
 - **Ticker DONE:** see HANDOFF item 3 above for the full detail (module,
   facets, snapshot, tests). Key files: `src/dangote_opt/data/ticker.py`,

@@ -119,6 +119,22 @@ All notable changes to this project. Format based on Keep a Changelog.
 - 11 new tests (73 total).
 
 ### Changed
+- **Dashboard rebuilt as a proper project front page** (`app/app.py`):
+  cold-start-first cell order — header → precomputed headline KPI strip
+  (margin, uplift, re-opt value, VaR/CVaR/P(loss), surrogate R² straight from
+  the committed Phase 4/5 JSONs, zero model load or network) → live market
+  ticker → optimal-diet and regime-switch bar charts (plotly, from
+  `scenarios_phase5.json` `base_blend`/`switch_share` — the fan/tornado
+  figures previously never rendered by the app now appear in the risk
+  section) → deep re-opt interaction → collapsed assumptions/methodology/
+  reproduce accordions → footer. Assumptions text is built from live objects
+  (model-card leave-crude-out keys are `yield_*`-prefixed — verified, not
+  indexed from memory). Both model paths verified by headless export: pkl
+  present (surrogate KPI + honesty note) and pkl absent (the HF Space
+  condition — bridge KPI footnote, bridge-path DE). marimo check back to the
+  single pre-existing cosmetic warning; the markdown-indentation warning
+  pattern is documented (plain triple-quoted `mo.md` strings get flagged;
+  f-strings with real placeholders are exempt).
 - **marimo floor pinned at 0.23.0** (Phase 6 kickoff, spec open item 5):
   CVE-2026-39987 — pre-auth RCE via marimo's terminal WebSocket endpoint — is
   fixed in 0.23.0, and the old `>=0.12` floor would resolve a vulnerable
