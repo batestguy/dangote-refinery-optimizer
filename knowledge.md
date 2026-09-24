@@ -2,21 +2,26 @@
 
 ## ★ HANDOFF (2026-09-23, evening) — READ THIS FIRST
 
-**State: Phases 0–5 complete · Phase 6 code-complete (dashboard redesigned,
-ticker live, deploy kit verified) · Phase 7 opened (exec summary + blog
-drafted) · 137 tests, CI green, all pushed. Remaining: user-side HF Space
-push + Phase 7 talking points/video + UI polish (open to suggestions).**
+**State: Phases 0–5 complete · Phase 6 code-complete (dashboard rethemed
+2026-09-24 to the Dangote brand palette, light corporate theme; ticker live,
+deploy kit verified) · Phase 7 opened (exec summary + blog drafted) · 137
+tests, CI green, all pushed. Remaining: user-side HF Space push + Phase 7
+talking points/video + UI polish remainder (spinner, responsive, a11y).**
 
-**What the dashboard IS now (2026-09-23, evening):** a dark "refinery control
-room" console — graphite `#0f0d0b` + amber crude accents, Barlow Condensed /
-IBM Plex Mono, KPI tiles, numbered sections 01–06 with "what you're looking
-at" captions, START-here stepper, real CC-licensed photos of the Lekki site
-(hero backdrop, base64-embedded) + the CDU unit (section 03), live NGN/USD +
-WTI ticker with LIVE/STALE/SNAP badges, deep re-opt with the LP honest bar
-wired in ($15.67 vs DE $15.84 through the surrogate), "how to read" callouts.
-Local preview: `PYTHONUTF8=1 uv run marimo run app/app.py` (a dev server was
-still running on port 2718 at handoff — kill via
-`netstat -ano | grep :2718` then `taskkill //PID <pid> //F`).
+**What the dashboard IS now (2026-09-24 retheme):** a light corporate page
+in the **Dangote brand palette** — navy indigo `#171D64` ("Lucky Point",
+Pantone 2756C) + flare red `#F0513A` ("Flare", Pantone 7625C; cited:
+schemecolor.com Dangote Cement palette + LinkedIn "The Dangote Color
+Strategy") on a paper-white `#f7f8fc` canvas, **palette-only, no logo asset**
+(trademark — repo is an unaffiliated demo). Hero = navy overlay gradient +
+red top rule over the Lekki photo (base64-embedded); KPI tiles navy/red;
+Plotly template renamed `console`→`dangote` (light grid); Barlow Condensed /
+IBM Plex Mono kept. Numbered sections 01–06, stepper, NGN/USD + WTI ticker
+with LIVE/STALE/SNAP badges, deep re-opt with the LP honest bar wired in
+($15.67 vs DE $15.84 through the surrogate), how-to-read callouts. The
+fan/tornado PNGs are white-backed and now blend (dark-restyle backlog item
+CLOSED). Local preview: `PYTHONUTF8=1 uv run marimo run app/app.py` (no dev
+server left running; port 2718 free).
 
 **⚠️ Run-button "Failed to update value" — ROOT CAUSE KNOWN, not a code bug:**
 marimo's **skew protection** rejects clicks from browser tabs holding a stale
@@ -29,9 +34,8 @@ DE $15.84 / LP $15.67 / feasible). If it EVER fails after a hard refresh,
 check the server log for the token line before touching code.
 
 **Next-session queue (in order):**
-1. **UI polish — OPEN TO SUGGESTIONS (user asked to keep this open).** Ideas
-   backlog: restyle matplotlib fan/tornado PNGs to dark (they render as white
-   plates against the console — biggest visual mismatch left); Run-button
+1. **UI polish remainder.** Brand retheme DONE 2026-09-24 (Step 20) — fan/
+   tornado dark-restyle closed by the light theme. Still open: Run-button
    loading UX (`mo.status.spinner()` around the DE — currently silent for
    ~8–15 s); responsive/mobile pass; contrast/accessibility audit
    (ui-geometry-audit + web-design-guidelines skills exist); possible

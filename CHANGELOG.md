@@ -4,6 +4,23 @@ All notable changes to this project. Format based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Changed
+- **Dashboard retheme: light corporate identity in the Dangote brand palette**
+  (`app/app.py`). Direction from the project owner: the dashboard targets
+  Dangote, so it wears the logo's colors — navy indigo `#171D64` ("Lucky
+  Point", Pantone 2756C) + flare red `#F0513A` ("Flare", Pantone 7625C),
+  cited to schemecolor.com's Dangote Cement palette and "The Dangote Color
+  Strategy" (LinkedIn). Paper-white canvas (`#f7f8fc`), navy hero panel with
+  the red arc re-created as a 6px top rule over the Lekki photo gradient,
+  navy/red KPI accents, white-backed matplotlib fan/tornado plates now blend
+  seamlessly (the old dark-theme mismatch resolves itself). Plotly template
+  renamed `console` → `dangote` (light grid, ink-toned labels); pills,
+  callouts, tables, stepper and links re-derivated. Palette-only by choice:
+  no actual logo asset (trademark; the repo is an unaffiliated methodology
+  demo). Verified: marimo check clean, 137 tests, ruff, headless export both
+  model paths (pkl + pkl-hidden Space condition), browser screenshot probes
+  (hero band ≈ #171D64, body #f7f8fc), console clean.
+
 ### Added
 - **Real refinery imagery, credited** (dashboard): two CC BY-SA 4.0 photos of
   the actual Dangote Refinery at Lekki from Wikimedia Commons — site hero

@@ -267,6 +267,19 @@ delivered; 127 tests; CI green.
    platform choice (Medium vs personal site) still open (spec §8).
 3. 🔜 Interview talking points + video — remaining Phase 7 deliverables.
 
+## Step 20 — Dashboard brand retheme (2026-09-24) ✅
+Owner direction: the dashboard targets Dangote, so it wears the Dangote
+palette — **palette-only, no logo asset** (trademark discipline; the repo is
+an unaffiliated methodology demo). Navy indigo `#171D64` ("Lucky Point",
+Pantone 2756C) + flare red `#F0513A` ("Flare", Pantone 7625C), cited to
+schemecolor.com's Dangote Cement palette + "The Dangote Color Strategy"
+(LinkedIn); light corporate theme replaces the dark console. Acceptance:
+`marimo check` clean · 137 tests · ruff · headless export on both model paths
+(pkl + Space condition) · browser pixel probes (hero ≈ #171D64, body #f7f8fc)
+· fan/tornado white plates now blend with the light canvas. Side effect: the
+dark-restyle backlog item for the matplotlib PNGs is **closed** — on light
+backgrounds they already match.
+
 ## Free-tier ledger (nothing above has a paid component)
 
 | Resource | Tier | Limit we design around |

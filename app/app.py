@@ -3,9 +3,12 @@
 The file that deploys to HuggingFace Spaces unchanged (spec §3.7).
 Runs locally with:  uv run marimo run app/app.py
 
-Design system: "refinery control room" — dark warm graphite console, amber
-crude accents, mono numerals (fonts load async from Google Fonts with safe
-fallbacks, so cold start is never blocked). Every section is numbered and
+Design system: light corporate theme in the Dangote brand palette — navy
+indigo #171D64 ("Lucky Point", Pantone 2756C) + flare red #F0513A ("Flare",
+Pantone 7625C), per the Dangote Cement logo colors (schemecolor.com;
+"The Dangote Color Strategy", LinkedIn) — with mono numerals (fonts load
+async from Google Fonts with safe fallbacks, so cold start is never blocked).
+Every section is numbered and
 captioned so a first-time visitor knows what to look at and what each result
 means; the only click-gated part is the deep re-optimization.
 
@@ -48,35 +51,42 @@ def _(mo):
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
     :root {
-      --bg: #0f0d0b;          /* warm graphite — crude, not navy */
-      --surface: #171310;
-      --surface-2: #1e1913;
-      --border: #2e2820;
-      --text: #ece5d8;
-      --muted: #a29885;
-      --amber: #e8a33d;       /* crude oil */
-      --amber-dim: #8a6223;
-      --green: #3ddc97;
-      --red: #e05f5f;
-      --teal: #2dd4bf;
+      /* Brand palette — Dangote logo colors (cited): navy indigo #171D64
+         ("Lucky Point", Pantone 2756C) + flare red #F0513A ("Flare", Pantone
+         7625C). Sources: schemecolor.com/dangote-cement-logo-colors.php and
+         "The Dangote Color Strategy" (LinkedIn). Supporting tints derived. */
+      --bg: #f7f8fc;          /* paper white with a navy breath */
+      --surface: #ffffff;
+      --surface-2: #eef0f9;
+      --border: #d8dcef;
+      --text: #171d3c;        /* near-black navy ink */
+      --muted: #5c6191;
+      --navy: #171d64;        /* brand primary */
+      --red: #f0513a;         /* brand accent */
+      --red-dim: #c93a26;     /* flare, darkened for rules on white */
+      --amber: #c77700;       /* warning only (stale badge) */
+      --amber-dim: #8a5700;
+      --green: #0e9f6e;
+      --teal: #0f766e;
       --mono: 'IBM Plex Mono', ui-monospace, monospace;
       --cond: 'Barlow Condensed', 'Arial Narrow', sans-serif;
       --sans: 'IBM Plex Sans', system-ui, sans-serif;
     }
     html, body { background: var(--bg) !important; }
     /* marimo's shell: .bg-background is the Tailwind token that paints the
-       gutters/header white — verified via DOM inspection, overridden here.
-       .marimo-cell wrappers also paint white; cells go transparent so the
-       console background shows through between sections. */
+       gutters/header — verified via DOM inspection, overridden here.
+       .marimo-cell wrappers also paint their own background; cells go
+       transparent so the page background shows through between sections. */
     .bg-background { background-color: var(--bg) !important; }
     .marimo-cell { background-color: transparent !important; }
     body, .prose, .markdown p, .markdown li { color: var(--text); }
     h1, h2, h3 { color: var(--text); font-family: var(--cond); letter-spacing: .02em; }
-    code { color: var(--amber); font-family: var(--mono); font-size: .88em; }
+    code { color: var(--navy); font-family: var(--mono); font-size: .88em;
+           background: var(--surface-2); border-radius: 4px; padding: 1px 5px; }
     table { border-collapse: collapse; width: 100%; font-family: var(--mono);
             font-size: 13.5px; }
-    th { text-align: left; color: var(--amber); font-weight: 600;
-         border-bottom: 2px solid var(--amber-dim); padding: 7px 10px;
+    th { text-align: left; color: var(--navy); font-weight: 600;
+         border-bottom: 2px solid var(--red); padding: 7px 10px;
          text-transform: uppercase; letter-spacing: .06em; font-size: 11.5px; }
     td { padding: 7px 10px; border-bottom: 1px solid var(--border);
          color: var(--text); }
@@ -84,33 +94,35 @@ def _(mo):
     img { border-radius: 10px; border: 1px solid var(--border); }
 
     /* hero */
-    .hero { border: 1px solid var(--border); border-left: 6px solid var(--amber);
-            background: linear-gradient(105deg, rgba(15,13,11,.94) 0%,
-                        rgba(15,13,11,.86) 42%, rgba(15,13,11,.55) 100%),
+    /* hero — the logo's composition: navy field, red arc on top */
+    .hero { border: 1px solid var(--border); border-top: 6px solid var(--red);
+            background: linear-gradient(105deg, rgba(23,29,100,.96) 0%,
+                        rgba(23,29,100,.88) 42%, rgba(23,29,100,.62) 100%),
                         url('data:image/jpeg;base64,__HERO_B64__') center 38%/cover no-repeat;
             border-radius: 14px; padding: 30px 30px; min-height: 230px; }
     .hero h1 { font-size: 44px; line-height: 1; margin: 0 0 6px;
-               text-transform: uppercase; }
-    .hero h1 .oil { color: var(--amber); }
-    .hero p { margin: 6px 0 12px; color: var(--muted); max-width: 68ch; }
+               text-transform: uppercase; color: #fff; }
+    .hero h1 .oil { color: #ff8d7a; }
+    .hero p { margin: 6px 0 12px; color: #cdd2f2; max-width: 68ch; }
+    .hero p b, .hero .step b { color: #fff; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip { font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
-            color: var(--amber); border: 1px solid var(--amber-dim);
-            border-radius: 999px; padding: 3px 10px; background: rgba(232,163,61,.07); }
+            color: #fff; border: 1px solid rgba(240,81,58,.9);
+            border-radius: 999px; padding: 3px 10px; background: rgba(240,81,58,.22); }
 
     /* start-here stepper */
     .stepper { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    .step { flex: 1 1 200px; background: var(--surface); border: 1px solid var(--border);
+    .step { flex: 1 1 200px; background: rgba(255,255,255,.94); border: 1px solid var(--border);
             border-radius: 10px; padding: 10px 12px; font-size: 13px;
             color: var(--muted); }
     .step b { color: var(--text); display: block; }
-    .step .n { font-family: var(--mono); color: var(--amber); font-size: 12px; }
+    .step .n { font-family: var(--mono); color: var(--red); font-size: 12px; }
 
     /* numbered section banners — the directional layer */
     .sec { display: flex; gap: 14px; align-items: flex-start; margin: 26px 0 10px;
            border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-    .sec .idx { font-family: var(--mono); font-size: 15px; color: var(--bg);
-                background: var(--amber); border-radius: 6px; padding: 3px 8px;
+    .sec .idx { font-family: var(--mono); font-size: 15px; color: #fff;
+                background: var(--navy); border-radius: 6px; padding: 3px 8px;
                 font-weight: 600; }
     .sec h2 { margin: 0; font-size: 26px; text-transform: uppercase;
               letter-spacing: .04em; }
@@ -122,12 +134,11 @@ def _(mo):
     .kpi { background: var(--surface); border: 1px solid var(--border);
            border-radius: 12px; padding: 14px 16px; position: relative; overflow: hidden; }
     .kpi::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px;
-                   background: var(--accent, var(--amber)); }
+                   background: var(--accent, var(--navy)); }
     .kpi .label { font-family: var(--cond); text-transform: uppercase;
                   letter-spacing: .1em; font-size: 12.5px; color: var(--muted); }
     .kpi .value { font-family: var(--mono); font-size: 30px; font-weight: 600;
-                  color: var(--accent, var(--amber)); margin: 4px 0 2px;
-                  text-shadow: 0 0 22px color-mix(in srgb, var(--accent, var(--amber)) 35%, transparent); }
+                  color: var(--accent, var(--navy)); margin: 4px 0 2px; }
     .kpi .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
 
     /* ticker tape */
@@ -142,16 +153,17 @@ def _(mo):
     .pill { font-family: var(--mono); font-size: 11px; border-radius: 999px;
             padding: 2px 9px; margin-left: 8px; vertical-align: middle; }
     .pill.live { color: var(--green); border: 1px solid var(--green); background: rgba(61,220,151,.08); }
-    .pill.stale { color: var(--amber); border: 1px solid var(--amber-dim); }
+    .pill.stale { color: var(--amber); border: 1px solid var(--amber);
+                  background: rgba(199,119,0,.07); }
     .pill.snap { color: var(--teal); border: 1px solid var(--teal); background: rgba(45,212,191,.07); }
     .legend { margin-top: 8px; font-size: 12px; color: var(--muted);
               font-family: var(--mono); }
 
     /* callouts + result cards */
-    .callout { border: 1px solid var(--border); border-left: 4px solid var(--teal);
+    .callout { border: 1px solid var(--border); border-left: 4px solid var(--navy);
                background: var(--surface); border-radius: 10px; padding: 10px 14px;
                font-size: 13px; color: var(--muted); margin-top: 10px; }
-    .callout.amber { border-left-color: var(--amber); }
+    .callout.accent { border-left-color: var(--red); }
     .card { background: var(--surface); border: 1px solid var(--border);
             border-radius: 12px; padding: 16px 18px; }
     .bar-de { color: var(--green); font-weight: 600; }
@@ -163,7 +175,7 @@ def _(mo):
              height: auto; display: block; }
     .credit { font-family: var(--mono); font-size: 10.5px; color: var(--muted);
               margin-top: 5px; }
-    .credit a { color: var(--teal); }
+    .credit a { color: var(--navy); }
     .duo { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; }
     @media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
     .duo .cell { background: var(--surface); border: 1px solid var(--border);
@@ -171,10 +183,10 @@ def _(mo):
     .duo .cap { font-size: 13px; color: var(--muted); margin-top: 8px;
                 line-height: 1.5; }
     .duo .cap b { color: var(--text); }
-    .foot a { color: var(--teal); }
+    .foot a { color: var(--navy); }
     .deerflow { font-family: var(--mono); font-size: 11px; color: var(--muted);
                 opacity: .75; text-decoration: none; }
-    .deerflow:hover { opacity: 1; color: var(--amber); }
+    .deerflow:hover { opacity: 1; color: var(--red); }
     </style>
     """
     mo.Html(css.replace("__HERO_B64__", hero_b64))
@@ -381,7 +393,7 @@ def _(SC, SENS, SURROGATE_INFO, mo):
           achieves and why it's trustworthy. No model load, no network.</p>
         </div></div>
         <div class="kpi-grid">
-          <div class="kpi" style="--accent: var(--amber)">
+          <div class="kpi" style="--accent: var(--red)">
             <div class="label">Blend margin</div>
             <div class="value">${SC["base_margin"]:.2f}<span style="font-size:14px">/bbl</span></div>
             <div class="note">LP optimum at base prices — diet ≈ 100% Alaska North
@@ -405,7 +417,7 @@ def _(SC, SENS, SURROGATE_INFO, mo):
             <div class="note">historical block bootstrap of real EIA co-moves;
             only {SC["probability_of_loss"]:.1%} of price worlds lose money.</div>
           </div>
-          <div class="kpi" style="--accent: var(--teal)">
+          <div class="kpi" style="--accent: var(--navy)">
             <div class="label">Surrogate quality</div>
             <div class="value">{_model_value}</div>
             <div class="note">{_model_note}</div>
@@ -480,7 +492,7 @@ def _(mo):
 
 
 @app.cell
-def _(SC, mo):    # 03 · Charts — dark plotly template matching the console.
+def _(SC, mo):  # 03 · Charts — light brand plotly template (navy/red).
     import base64 as _cbase64
     from pathlib import Path as _cPath
 
@@ -488,20 +500,18 @@ def _(SC, mo):    # 03 · Charts — dark plotly template matching the console.
     import plotly.graph_objects as _go
     import plotly.io as _pio
 
-    _cdu_b64 = _cbase64.b64encode(
-        _cPath("docs/assets/credited/cdu_unit.jpg").read_bytes()
-    ).decode()
+    _cdu_b64 = _cbase64.b64encode(_cPath("docs/assets/credited/cdu_unit.jpg").read_bytes()).decode()
 
-    _pio.templates["console"] = _go.layout.Template(
+    _pio.templates["dangote"] = _go.layout.Template(
         layout=_go.Layout(
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="IBM Plex Mono, monospace", color="#cfc7b8", size=12),
-            xaxis=dict(gridcolor="#2e2820", zerolinecolor="#2e2820"),
-            yaxis=dict(gridcolor="#2e2820", zerolinecolor="#2e2820"),
+            font=dict(family="IBM Plex Mono, monospace", color="#3a3f6e", size=12),
+            xaxis=dict(gridcolor="#d8dcef", zerolinecolor="#d8dcef"),
+            yaxis=dict(gridcolor="#d8dcef", zerolinecolor="#d8dcef"),
         )
     )
-    _pio.templates.default = "console"
+    _pio.templates.default = "dangote"
 
     def _bar(pairs, color, value_fmt):
         names = [k for k, _ in pairs]
@@ -514,7 +524,7 @@ def _(SC, mo):    # 03 · Charts — dark plotly template matching the console.
         )
         fig.update_traces(
             marker_color=color,
-            marker_line_color="#0f0d0b",
+            marker_line_color="#ffffff",
             marker_line_width=1,
             textposition="outside",
             cliponaxis=False,
@@ -566,10 +576,10 @@ def _(SC, mo):    # 03 · Charts — dark plotly template matching the console.
     mo.vstack(
         [
             mo.Html(_section03),
-            _bar(_diet, "#e8a33d", lambda v: f"{v:.1f}%"),
-            _bar(_switch, "#2dd4bf", lambda v: f"{v:.1f}%" if v >= 1 else f"{v:.1f}%"),
+            _bar(_diet, "#171d64", lambda v: f"{v:.1f}%"),
+            _bar(_switch, "#f0513a", lambda v: f"{v:.1f}%" if v >= 1 else f"{v:.1f}%"),
             mo.Html(
-                '<div class="callout amber"><b>How to read:</b> Alaska North Slope '
+                '<div class="callout accent"><b>How to read:</b> Alaska North Slope '
                 "wins at base prices (sour discount &gt; sweetening cost), but "
                 "Forcados takes over in ~48% of price worlds — the two-regime diet "
                 "is the central economic trade-off.</div>"
@@ -668,7 +678,7 @@ def _(
     mo.stop(
         not run.value,
         mo.Html(
-            '<div class="card" style="border-left:4px solid var(--amber)">'
+            '<div class="card" style="border-left:4px solid var(--red)">'
             "<b>Waiting for you:</b> press <b>⚡ Run deep optimization</b> above. "
             "The solver picks the crude diet <i>and</i> the FCC severity, then "
             "checks itself against the exact LP — the honest bar.</div>"
@@ -828,6 +838,14 @@ def _(mo):
           <a href="https://github.com/batestguy/dangote-refinery-optimizer/blob/main/docs/data_provenance.md" target="_blank">docs/data_provenance.md</a>
           · Repo: <a href="https://github.com/batestguy/dangote-refinery-optimizer" target="_blank">batestguy/dangote-refinery-optimizer</a>
           · <a class="deerflow" href="https://deerflow.tech" target="_blank">✦ interface by Deerflow</a>
+          <div style="margin-top:9px">
+            <b>Methodology &amp; why:</b> every number on this page is either
+            integrated from a published curve, cited to a source, or labeled
+            ASSUMED with a rationale — because an optimization you can't audit
+            is just a claim. Full audit trail:
+            <a href="https://github.com/batestguy/dangote-refinery-optimizer/blob/main/docs/methodology.md" target="_blank">docs/methodology.md</a>.
+          </div>
+          <div style="margin-top:6px; font-family:var(--mono)">Project by <b>JJMB</b> · 2026</div>
         </div>
         """
     )
