@@ -4,6 +4,15 @@ All notable changes to this project. Format based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+- **HF Static portfolio Space live**
+  ([JBZABC/dangote-optimizer-portfolio](https://huggingface.co/spaces/JBZABC/dangote-optimizer-portfolio)):
+  headline-results table, methodology credibility section, links to the repo.
+  ⚠️ The interactive Docker Space is blocked on HF's free tier (Docker Spaces
+  now require PRO) — the portfolio links the repo's marimo app instead;
+  `deploy/hf-push-runbook.md` + `scripts/build_space_root.py` stay ready for
+  a PRO upgrade.
+
 ### Changed
 - **Dashboard retheme: light corporate identity in the Dangote brand palette**
   (`app/app.py`). Direction from the project owner: the dashboard targets

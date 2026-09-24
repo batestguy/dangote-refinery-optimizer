@@ -16,9 +16,11 @@ number traceable to a cited source or labeled as a documented assumption.
 
 ## Live artifacts
 
-* 🛢️ **Interactive dashboard** — [dangote-blend-optimizer Space](https://huggingface.co/spaces/YOUR_HF_USERNAME/dangote-blend-optimizer):
-  headline economics, live NGN/USD + WTI ticker, optimal diet, 10k-scenario
-  risk, one-click deep re-optimization.
+* 🛢️ **Interactive dashboard** — [run it from the repo](https://github.com/batestguy/dangote-refinery-optimizer#readme)
+  (marimo app: `uv run marimo run app/app.py`): headline economics, live
+  NGN/USD + WTI ticker, optimal diet, 10k-scenario risk, one-click deep
+  re-optimization. (HF-hosted interactive Space pending — Docker Spaces now
+  require PRO on free accounts.)
 * 💻 **Source repo** — [batestguy/dangote-refinery-optimizer](https://github.com/batestguy/dangote-refinery-optimizer):
   137 offline tests, CI green, deterministic seeds, `uv.lock` reproducibility.
 

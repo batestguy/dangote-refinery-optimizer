@@ -43,10 +43,15 @@ check the server log for the token line before touching code.
    count-up animations, per-product margin waterfall, hover drill-downs.
    ⚠️ Commons rate limit: bulk image fetches hit HTTP 429 — throttle with
    retries (15–30 s backoff) when pulling more assets.
-2. **User-side HF push** — `deploy/hf-push-runbook.md` has exact commands
-   (`scripts/build_space_root.py` assembles + asserts; simulation-verified).
-   Then fill `YOUR_HF_USERNAME` in `deploy/portfolio/README.md` + add the
-   Space badge to README.
+2. **HF deploy — PARTIALLY DONE 2026-09-24.** ✅ Portfolio Static Space live:
+   https://huggingface.co/spaces/JBZABC/dangote-optimizer-portfolio (HF auth
+   works from stored huggingface_hub credentials — user `JBZABC`; NOT in
+   `.env`). ⚠️ **Interactive Docker Space blocked: HF now requires PRO for
+   Docker Spaces on free accounts** (API error at create_repo). Options: PRO
+   subscription, or leave the dashboard repo-run (portfolio already links
+   it). Runbook + assembly stay ready (`deploy/hf-push-runbook.md`,
+   `scripts/build_space_root.py`). GitHub README Space badge still to add
+   (portfolio badge makes sense now).
 3. **Phase 7 remainder:** interview talking points, video, blog platform
    choice (spec §8). `docs/executive-summary.md` + `docs/blog-post.md` are
    publication-ready drafts.

@@ -253,10 +253,13 @@ delivered; 127 tests; CI green.
    cache 1 h) + WTI spot (EIA daily `EPCWTI`/`YCUOK`, probed live) shipped in
    `data/ticker.py` + app cell; snapshot fallback
    `data/derived/ticker_latest.json` committed; 10 new tests (137 total).
-4. HF Static Space portfolio page linking to the app.
-   — page content ready 2026-09-23: `deploy/portfolio/README.md` (static SDK
-   frontmatter, headline-results table, links; `YOUR_HF_USERNAME` placeholder
-   to fill at push). User push remains.
+4. ✅ (2026-09-24) HF Static Space portfolio page LIVE:
+   https://huggingface.co/spaces/JBZABC/dangote-optimizer-portfolio
+   (deployed via `huggingface_hub` API, no git push needed). ⚠️ **Interactive
+   Docker Space BLOCKED on free tier** — HF now requires PRO for Docker
+   Spaces; the portfolio links the repo's marimo app instead. Revisit if the
+   account upgrades to PRO (assemble with `scripts/build_space_root.py`,
+   push per `deploy/hf-push-runbook.md`).
 
 ## Step 19 — Phase 7 documentation & packaging (started 2026-09-23)
 1. ✅ (2026-09-23) `docs/executive-summary.md` — answer-first brief with the
