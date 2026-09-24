@@ -43,24 +43,36 @@ check the server log for the token line before touching code.
    count-up animations, per-product margin waterfall, hover drill-downs.
    ⚠️ Commons rate limit: bulk image fetches hit HTTP 429 — throttle with
    retries (15–30 s backoff) when pulling more assets.
-2. **Free interactive hosting — WASM → GitHub Pages BETA (2026-09-24).**
-   Live: https://batestguy.github.io/dangote-refinery-optimizer/ (gh-pages
-   branch = marimo `html-wasm` export of app/app.py; 29 MB; app.py carries a
-   PEP 723 WASM block + pyodide.http `_read_bytes_*` shims + a micropip
-   install of the bundled dangote_opt wheel — rebuild: `uv build --wheel` →
-   copy into `app/wheels/` → `echo n | uv run marimo export html-wasm
-   app/app.py -o output/wasm_vN --mode run` → force-push that dir to
-   gh-pages). ⚠️ UNVERIFIED IN BROWSER: this box's CDN connection kept
-   aborting the Pyodide binary download ("Network error: Response body
-   loading was aborted" — same flakiness as FX timeouts); a visitor on a
-   stable connection must confirm boot + Run. Also: HF portfolio Static
-   Space live (JBZABC/dangote-optimizer-portfolio); **Docker Spaces need
-   PRO** — do not re-litigate. pyodide gotchas learned: use
-   `pyodide.http.open_url` (built-in; the third-party shim's open_url
-   doesn't exist), build URLs as strings (pathlib collapses `//`), micropip
-   needs ABSOLUTE wheel URLs, `public/` must sit next to the notebook
-   (`app/public/`), PEP 723 in the notebook triggers a sandbox prompt on
-   export (answer `n`).
+2. **⚠️ OPEN THREAD (next session starts HERE): WASM boot hangs — "keeps
+   circling" on the loading screen.** Live URL:
+   https://batestguy.github.io/dangote-refinery-optimizer/ (gh-pages =
+   marimo `html-wasm` export, all assets verified 200: wheel, parquet,
+   JSONs, PNGs, index.html). Owner reports endless loading spinner.
+   **Diagnosis so far:** export pipeline is fully correct (MW lint clean,
+   ruff/marimo-check/137 tests green, wheel + data + images bundled, absolute
+   micropip URL, pyodide.http shims); automated boots on THIS box never
+   completed because its network kept aborting the Pyodide binary from
+   jsdelivr ("wasm instantiation failed! Network error: Response body
+   loading was aborted" / "Failed to fetch dynamically imported module
+   assets/run-page-*.js") — so the hang seen locally may be this box's CDN
+   flakiness, BUT the owner saw it from Chrome too, so suspect a real bug.
+   **Next-session debug plan (in order):** ① open the live URL with DevTools
+   open, note the LAST console line (pyodide download vs micropip wheel vs
+   RPC timeout) ② test locally: `cd output/wasm_v6 && python -m
+   http.server 8905` — if localhost boots fine but Pages doesn't, it's
+   Pages-specific (MIME types? .wasm/whl content-type? subdir base path?) ③
+d   try `--single-file` export (all assets inlined from CDN — sidesteps
+   asset-path issues entirely) ④ check marimo version pin vs pyodide v314
+   runtime in the export ⑤ consider molab (marimo's own host) as the
+   zero-plumbing fallback — it bundles local packages for us. **Export
+   rebuild recipe:** `uv build --wheel` → copy whl to `app/wheels/` →
+   `echo n | uv run marimo export html-wasm app/app.py -o output/wasm_vN
+   --mode run` → deploy via a CLEAN TEMP CLONE of gh-pages (NEVER
+   `git add -A` from inside the export dir — it stages the whole repo; that
+   is how Pages ended up serving the README on the first push). All state
+   is committed on main (4c1f639) — nothing uncommitted. Portfolio Space
+   (JBZABC/dangote-optimizer-portfolio) unaffected; Docker Spaces still
+   need PRO — do not re-litigate.
 3. **Phase 7 remainder:** interview talking points, video, blog platform
    choice (spec §8). `docs/executive-summary.md` + `docs/blog-post.md` are
    publication-ready drafts.
