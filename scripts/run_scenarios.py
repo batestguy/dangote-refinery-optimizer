@@ -24,6 +24,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 
 from dangote_opt.config import CONFIG
 from dangote_opt.data.assays import frame_to_records
@@ -37,6 +39,13 @@ from dangote_opt.optimization.scenarios import (
     historical_changes,
     run_scenarios,
 )
+
+# Brand palette — Dangote logo colors (cited; see app/app.py design cell).
+NAVY = "#171d64"
+RED = "#f0513a"
+INK = "#171d3c"
+MUTED = "#5c6191"
+GRID = "#d8dcef"
 
 SLATE = "data/derived/slate_phase1.parquet"
 OUT_JSON = Path("data/derived/scenarios_phase5.json")
@@ -79,7 +88,7 @@ def load_inputs() -> tuple:
 
 
 def fan_chart(draws: np.ndarray, margins: np.ndarray, path: Path) -> None:
-    """Margin quantile fan across Brent-shock buckets."""
+    """Margin quantile fan across Brent-shock buckets (brand styling)."""
     order = np.argsort(draws[:, 0])
     b = draws[order, 0]
     m = margins[order]
@@ -92,37 +101,104 @@ def fan_chart(draws: np.ndarray, margins: np.ndarray, path: Path) -> None:
     q95 = [np.percentile(m[ix], 95) for ix in buckets]
     fig, ax = plt.subplots(figsize=(8, 4.5))
     x = np.array(centers) * 100  # % Brent change
-    ax.fill_between(x, q05, q95, alpha=0.25, color="#1f77b4", label="5–95 pct")
-    ax.fill_between(x, q25, q75, alpha=0.45, color="#1f77b4", label="25–75 pct")
-    ax.plot(x, q50, color="#1f77b4", lw=2, label="median")
-    ax.axhline(0, color="#d62728", lw=1, ls="--", label="break-even")
-    ax.set_xlabel("12-month Brent change (%)")
-    ax.set_ylabel("Re-optimized margin ($/bbl)")
-    ax.set_title(f"Margin fan — {N_ITERATIONS:,} correlated price scenarios (block bootstrap)")
-    ax.legend(frameon=False, loc="lower left")
-    ax.grid(alpha=0.25)
+    ax.fill_between(x, q05, q95, alpha=0.22, color=NAVY, label="5–95 pct")
+    ax.fill_between(x, q25, q75, alpha=0.40, color=NAVY, label="25–75 pct")
+    ax.plot(x, q50, color=NAVY, lw=2, label="median")
+    ax.axhline(0, color=RED, lw=1.2, ls="--", label="break-even")
+    ax.set_xlabel("12-month Brent change (%)", color=MUTED)
+    ax.set_ylabel("Re-optimized margin ($/bbl)", color=MUTED)
+    ax.set_title(
+        f"Margin fan — {N_ITERATIONS:,} correlated price scenarios (block bootstrap)",
+        color=INK,
+        fontsize=12,
+    )
+    ax.legend(frameon=False, loc="lower left", fontsize=9)
+    ax.grid(alpha=0.4, color=GRID)
+    ax.tick_params(colors=MUTED, labelsize=9)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    for spine in ("left", "bottom"):
+        ax.spines[spine].set_color(GRID)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
 
 
 def tornado_chart(tornado: dict[str, tuple[float, float]], base: float, path: Path) -> None:
-    """Standard tornado: bars spanning margin at −10% → +10% per product."""
+    """Brand tornado: bars span margin at −10% → +10% per product.
+
+    Overlap fix (2026-09-24): value labels are placed INSIDE the bar ends
+    when the bar is wide enough to hold them, outside only for narrow bars —
+    with explicit xlim headroom so outside labels never collide with the
+    axis or neighboring rows.
+    """
     items = sorted(tornado.items(), key=lambda kv: abs(kv[1][1] - kv[1][0]), reverse=True)
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(8, 4.2))
     y = np.arange(len(items))
+    lo_all = min(lo for _n, (lo, _h) in items)
+    hi_all = max(hi for _n, (_l, hi) in items)
+    pad = 0.12 * (hi_all - lo_all)  # headroom for outside labels
+    span = hi_all - lo_all
+    inside_min = 0.16 * span  # a bar must be at least this wide to hold labels
     for k, (_name, (lo, hi)) in enumerate(items):
-        ax.barh(k, hi - lo, left=lo, height=0.55, color="#1f77b4", alpha=0.8)
-        ax.text(lo - 0.15, k, f"${lo:.1f}", va="center", ha="right", fontsize=8)
-        ax.text(hi + 0.15, k, f"${hi:.1f}", va="center", ha="left", fontsize=8)
-    ax.axvline(base, color="#d62728", lw=1.4, ls="--", label=f"base ${base:.2f}")
+        # Split each bar at the base margin: worse side red, better side navy.
+        ax.barh(k, min(hi, base) - lo, left=lo, height=0.55, color=RED, alpha=0.9)
+        ax.barh(k, hi - max(lo, base), left=max(lo, base), height=0.55, color=NAVY, alpha=0.9)
+        wide = (hi - lo) >= inside_min
+        if wide:
+            ax.text(
+                lo + 0.015 * span,
+                k,
+                f"${lo:.1f}",
+                va="center",
+                ha="left",
+                fontsize=8,
+                color="white",
+                fontweight="bold",
+            )
+            ax.text(
+                hi - 0.015 * span,
+                k,
+                f"${hi:.1f}",
+                va="center",
+                ha="right",
+                fontsize=8,
+                color="white",
+                fontweight="bold",
+            )
+        else:
+            ax.text(
+                lo - 0.02 * span, k, f"${lo:.1f}", va="center", ha="right", fontsize=8, color=MUTED
+            )
+            ax.text(
+                hi + 0.02 * span, k, f"${hi:.1f}", va="center", ha="left", fontsize=8, color=MUTED
+            )
+    ax.axvline(base, color=INK, lw=1.2, ls="--")
     ax.set_yticks(y, [n.title() for n, _ in items])
-    ax.set_xlabel("Re-optimized margin ($/bbl)")
-    ax.set_title("Tornado — ±10% product-price shocks, optimal response")
-    ax.legend(frameon=False, loc="lower right")
-    ax.grid(alpha=0.25, axis="x")
-    fig.tight_layout()
-    fig.savefig(path, dpi=150)
+    ax.set_xlim(lo_all - pad, hi_all + pad)
+    ax.set_xlabel("Re-optimized margin ($/bbl)", color=MUTED)
+    ax.set_title("Tornado — ±10% product-price shocks, optimal response", color=INK, fontsize=12)
+    # Legend OUTSIDE the axes (below): inside placements collided with the
+    # narrow bottom bars' outside value labels.
+    ax.legend(
+        handles=[
+            Patch(facecolor=RED, alpha=0.9, label="worse than base"),
+            Patch(facecolor=NAVY, alpha=0.9, label="better than base"),
+            Line2D([0], [0], color=INK, lw=1.2, ls="--", label=f"base ${base:.2f}"),
+        ],
+        frameon=False,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.14),
+        ncols=3,
+        fontsize=9,
+    )
+    ax.grid(alpha=0.4, color=GRID, axis="x")
+    ax.tick_params(colors=MUTED, labelsize=9)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    for spine in ("left", "bottom"):
+        ax.spines[spine].set_color(GRID)
+    fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 

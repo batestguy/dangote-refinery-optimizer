@@ -34,12 +34,15 @@ DE $15.84 / LP $15.67 / feasible). If it EVER fails after a hard refresh,
 check the server log for the token line before touching code.
 
 **Next-session queue (in order):**
-1. **UI polish remainder.** Brand retheme DONE 2026-09-24 (Step 20) — fan/
-   tornado dark-restyle closed by the light theme. Still open: Run-button
-   loading UX (`mo.status.spinner()` around the DE — currently silent for
-   ~8–15 s); responsive/mobile pass; contrast/accessibility audit
+1. **UI polish remainder.** Brand retheme DONE 2026-09-24 (Step 20); fan/
+   tornado rebrand + tornado label-overlap fix + section-03 procedures photo
+   strip DONE 2026-09-24 (Step 21). Still open: Run-button loading UX
+   (`mo.status.spinner()` around the DE — currently silent for ~8–15 s);
+   responsive/mobile pass; contrast/accessibility audit
    (ui-geometry-audit + web-design-guidelines skills exist); possible
    count-up animations, per-product margin waterfall, hover drill-downs.
+   ⚠️ Commons rate limit: bulk image fetches hit HTTP 429 — throttle with
+   retries (15–30 s backoff) when pulling more assets.
 2. **User-side HF push** — `deploy/hf-push-runbook.md` has exact commands
    (`scripts/build_space_root.py` assembles + asserts; simulation-verified).
    Then fill `YOUR_HF_USERNAME` in `deploy/portfolio/README.md` + add the

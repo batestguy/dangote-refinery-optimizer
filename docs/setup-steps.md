@@ -280,6 +280,20 @@ schemecolor.com's Dangote Cement palette + "The Dangote Color Strategy"
 dark-restyle backlog item for the matplotlib PNGs is **closed** — on light
 backgrounds they already match.
 
+## Step 21 — Charts rebrand + tornado fix + procedures strip (2026-09-24) ✅
+1. ✅ Fan + tornado PNGs rebranded to the Dangote palette (navy quantile
+   bands/bars, red/ink accents) and the tornado's colliding value labels
+   fixed (inside-wide-bars labeling, split at base margin, explicit xlim
+   headroom). Regenerated deterministically — `scenarios_phase5.json`
+   re-verified identical on every metric (seed unchanged).
+2. ✅ Section 03 gains a 3-photo strip of real petrochemical work at Lekki
+   (FrankvEck's Commons series, files 2/7/11, CC BY-SA 4.0, three distinct
+   shoots — Commons API metadata verified, downscaled to ~131 KB total,
+   base64-embedded to preserve the cold-start guarantee). CREDITS.md,
+   provenance row 3b, and `scripts/build_space_root.py` (44-file Space tree)
+   updated. Acceptance: ruff, marimo check, 137 tests, Space assembly
+   assertions, browser photo-strip pixel probes — all green.
+
 ## Free-tier ledger (nothing above has a paid component)
 
 | Resource | Tier | Limit we design around |

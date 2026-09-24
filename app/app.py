@@ -95,7 +95,7 @@ def _(mo):
 
     /* hero */
     /* hero — the logo's composition: navy field, red arc on top */
-    .hero { border: 1px solid var(--border); border-top: 6px solid var(--red);
+    .hero { position: relative; border: 1px solid var(--border); border-top: 6px solid var(--red);
             background: linear-gradient(105deg, rgba(23,29,100,.96) 0%,
                         rgba(23,29,100,.88) 42%, rgba(23,29,100,.62) 100%),
                         url('data:image/jpeg;base64,__HERO_B64__') center 38%/cover no-repeat;
@@ -105,6 +105,11 @@ def _(mo):
     .hero h1 .oil { color: #ff8d7a; }
     .hero p { margin: 6px 0 12px; color: #cdd2f2; max-width: 68ch; }
     .hero p b, .hero .step b { color: #fff; }
+    .h-credit { position: absolute; right: 12px; bottom: 10px;
+                font-family: var(--mono); font-size: 10px; letter-spacing: .04em;
+                color: rgba(255,255,255,.85); background: rgba(23,29,60,.55);
+                border-radius: 6px; padding: 3px 8px; }
+    .h-credit a { color: #fff; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip { font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
             color: #fff; border: 1px solid rgba(240,81,58,.9);
@@ -176,13 +181,28 @@ def _(mo):
     .credit { font-family: var(--mono); font-size: 10.5px; color: var(--muted);
               margin-top: 5px; }
     .credit a { color: var(--navy); }
-    .duo { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; }
-    @media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
+    .duo { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px;
+           align-items: start; }
     .duo .cell { background: var(--surface); border: 1px solid var(--border);
-                 border-radius: 12px; padding: 10px 12px 12px; }
+                 border-radius: 12px; padding: 10px 12px 12px;
+                 position: relative; }
     .duo .cap { font-size: 13px; color: var(--muted); margin-top: 8px;
-                line-height: 1.5; }
+                line-height: 1.5; position: relative; z-index: 1; }
     .duo .cap b { color: var(--text); }
+
+    /* procedures photo strip */
+    .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+             margin-top: 12px; }
+    .strip .s-item { background: var(--surface); border: 1px solid var(--border);
+                     border-radius: 12px; padding: 8px 8px 9px; }
+    .strip img { width: 100%; height: 190px; object-fit: cover; border-radius: 8px;
+                 border: 1px solid var(--border); display: block; }
+    .strip .s-credit { font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+                       margin-top: 6px; }
+    .strip .s-credit a { color: var(--navy); }
+    .strip .s-cap { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+    .strip .s-cap b { color: var(--text); }
+    @media (max-width: 900px) { .strip { grid-template-columns: 1fr; } }
     .foot a { color: var(--navy); }
     .deerflow { font-family: var(--mono); font-size: 11px; color: var(--muted);
                 opacity: .75; text-decoration: none; }
@@ -347,6 +367,8 @@ def _(mo):
             <span class="chip">DE ≡ LP</span>
             <span class="chip">137 OFFLINE TESTS</span>
           </div>
+          <div class="h-credit">Photo: GodwinPaya, CC BY-SA 4.0, via
+            <a href="https://commons.wikimedia.org/wiki/File:Palm_trees_beside_Dangote_Refinery_at_leki_village_Lagos_Nigeria.jpg" target="_blank">Commons</a></div>
           <div class="stepper">
             <div class="step"><span class="n">START 1</span><b>Read the headline tiles</b>
               The economics already computed — deterministic, seeded.</div>
@@ -501,6 +523,15 @@ def _(SC, mo):  # 03 · Charts — light brand plotly template (navy/red).
     import plotly.io as _pio
 
     _cdu_b64 = _cbase64.b64encode(_cPath("docs/assets/credited/cdu_unit.jpg").read_bytes()).decode()
+    _p1_b64 = _cbase64.b64encode(
+        _cPath("docs/assets/credited/procedures_a.jpg").read_bytes()
+    ).decode()
+    _p2_b64 = _cbase64.b64encode(
+        _cPath("docs/assets/credited/procedures_b.jpg").read_bytes()
+    ).decode()
+    _p3_b64 = _cbase64.b64encode(
+        _cPath("docs/assets/credited/procedures_c.jpg").read_bytes()
+    ).decode()
 
     _pio.templates["dangote"] = _go.layout.Template(
         layout=_go.Layout(
@@ -531,7 +562,7 @@ def _(SC, mo):  # 03 · Charts — light brand plotly template (navy/red).
         )
         fig.update_layout(
             height=52 + 34 * len(names),
-            margin=dict(l=4, r=40, t=6, b=4),
+            margin=dict(l=150, r=40, t=6, b=4),
             xaxis_title="share of optimal blends (%)",
             yaxis=dict(autorange="reversed"),
             xaxis_range=[0, 112],
@@ -563,16 +594,47 @@ def _(SC, mo):  # 03 · Charts — light brand plotly template (navy/red).
         '<div class="duo">'
         '<div class="cell">'
         '<img class="photo" src="data:image/jpeg;base64,__CDU_B64__" '
-        'alt="Crude distillation unit, Dangote Refinery, Lekki">'
-        '<div class="cap"><b>The crude distillation unit at Lekki</b> — the '
-        "real plant whose behavior our severity variable mimics: the FCC "
-        "converts 40→80% of the VGO cut as severity rises (cited range)."
-        '</div><div class="credit">Photo: FrankvEck, CC BY-SA 4.0, via '
-        '<a href="https://commons.wikimedia.org/wiki/File:Crude_oil_distillation_unit_at_Lekki.jpg" '
+        'alt="Vessel at Dangote refinery site, Lagos — crude arriving by sea at Lekki">'
+        '<div class="cap"><b>Where the barrel comes in</b> — a vessel at the '
+        "Dangote refinery site, Lekki: the crude our optimizer buys is one of "
+        "these cargoes. Inside the plant, the FCC converts 40→80% of the VGO "
+        "cut as severity rises (cited range) — the severity variable our "
+        "solver tunes.</div>"
+        '<div class="credit">Photo: GodwinPaya, CC BY-SA 4.0, via '
+        '<a href="https://commons.wikimedia.org/wiki/File:Vessel_at_Dangote_refinery_site,_Lagos.jpg" '
         'target="_blank">Wikimedia Commons</a></div>'
         "</div>"
         '<div class="cell">' + _cdu_note + "</div></div>"
     ).replace("__CDU_B64__", _cdu_b64)
+    _strip = (
+        (
+            '<div class="strip">'
+            '<div class="s-cap"><b>Inside the plant</b> — on site at the Dangote '
+            "Refinery, Lekki (2022): Aliko Dangote receiving a guest at the "
+            "plant, delivery of the 3,000-ton RFCC regenerator (people give the "
+            "scale), and the preheating train (desalting + distillation "
+            "column).</div>"
+            '<div class="s-item">'
+            '<img src="data:image/jpeg;base64,__P1__" alt="Aliko Dangote on site at the Dangote Refinery, Lekki">'
+            '<div class="s-credit">Photo: Maxwell, CC BY-SA 4.0, via '
+            '<a href="https://commons.wikimedia.org/wiki/File:Zulfi_Azad_with_Aliko_Dangote.jpg" target="_blank">Commons</a></div>'
+            "</div>"
+            '<div class="s-item">'
+            '<img src="data:image/jpeg;base64,__P2__" alt="Delivery of the 3,000-ton RFCC regenerator at Dangote Refinery, Lekki — people beside the vessel for scale">'
+            '<div class="s-credit">Photo: FrankvEck, CC BY-SA 4.0, via '
+            '<a href="https://commons.wikimedia.org/wiki/File:Regenerator.jpg" target="_blank">Commons</a></div>'
+            "</div>"
+            '<div class="s-item">'
+            '<img src="data:image/jpeg;base64,__P3__" alt="Preheating train — desalting and distillation column, Dangote Refinery, Lekki">'
+            '<div class="s-credit">Photo: FrankvEck, CC BY-SA 4.0, via '
+            '<a href="https://commons.wikimedia.org/wiki/File:Cdu-dangote-lekki3.jpg" target="_blank">Commons</a></div>'
+            "</div>"
+            "</div>"
+        )
+        .replace("__P1__", _p1_b64)
+        .replace("__P2__", _p2_b64)
+        .replace("__P3__", _p3_b64)
+    )
     mo.vstack(
         [
             mo.Html(_section03),
@@ -584,6 +646,7 @@ def _(SC, mo):  # 03 · Charts — light brand plotly template (navy/red).
                 "Forcados takes over in ~48% of price worlds — the two-regime diet "
                 "is the central economic trade-off.</div>"
             ),
+            mo.Html(_strip),
         ]
     )
     return

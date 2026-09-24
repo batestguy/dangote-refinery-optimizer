@@ -38,7 +38,7 @@
     ]
   },
   "brent_cost_sensitivity": -1.0,
-  "runtime_s": 98.79666110000107,
+  "runtime_s": 103.41715340001974,
   "provenance": {
     "shock_source": "EIA monthly dlog, block-of-12 bootstrap (2015-2025)",
     "cost_linkage": "Brent draw shifts all crude costs additively by Brent_ref*(f-1); differentials preserved; argmax unchanged",

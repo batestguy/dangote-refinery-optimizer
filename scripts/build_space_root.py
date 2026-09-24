@@ -144,7 +144,14 @@ def assemble() -> Path:
         shutil.copy2(src, assets / name)
     credited = assets / "credited"
     credited.mkdir(parents=True)
-    for name in ("refinery_site_hero.jpg", "cdu_unit.jpg", "CREDITS.md"):
+    for name in (
+        "refinery_site_hero.jpg",
+        "cdu_unit.jpg",
+        "procedures_a.jpg",
+        "procedures_b.jpg",
+        "procedures_c.jpg",
+        "CREDITS.md",
+    ):
         src = ROOT / "docs" / "assets" / "credited" / name
         if not src.exists():
             raise RuntimeError(f"missing required credited asset: {name}")

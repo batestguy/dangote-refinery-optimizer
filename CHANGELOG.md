@@ -20,6 +20,43 @@ All notable changes to this project. Format based on Keep a Changelog.
   demo). Verified: marimo check clean, 137 tests, ruff, headless export both
   model paths (pkl + pkl-hidden Space condition), browser screenshot probes
   (hero band ≈ #171D64, body #f7f8fc), console clean.
+- **Risk figures rebranded + tornado overlap fix** (`scripts/run_scenarios.py`,
+  regenerated PNGs): the margin fan and tornado charts now use the brand
+  palette (navy bars/quantile bands, red/ink accents, muted axes) instead of
+  matplotlib defaults, and the tornado's value labels no longer collide with
+  the axis or bars — labels sit inside wide bars (white on navy/red split at
+  the base margin: red = worse than base, navy = better) and outside only for
+  narrow bars, with explicit xlim headroom. Regeneration is deterministic:
+  `scenarios_phase5.json` re-verified byte-identical on every metric (same
+  seed), only `generated_utc` moved.
+- **Section 03 procedures photo strip** (`app/app.py`): three credited photos
+  of actual petrochemical work at the Lekki site — FrankvEck's Commons series
+  "Dangote-petro-chemical-procedures" (files 2/7/11, three distinct shoots,
+  CC BY-SA 4.0, Commons-API-verified) — downscaled (~131 KB total) and
+  base64-embedded like the hero, so the cold-start/no-external-requests
+  guarantee holds; responsive 3→1-column strip with inline credits;
+  `CREDITS.md` + provenance row 3b updated; Space assembly ships them.
+- **Hero photo refreshed** (`app/app.py`): the previous hero (GodwinPaya,
+  shot May 2018 — construction era) was the oldest freely licensed image in
+  the set; replaced with the newest freely licensed plant imagery on Commons
+  (FrankvEck series file 8, shot 2022-06-24), center-cropped to the hero
+  frame (248 KB, base64-embedded) with a dated credit chip on the hero
+  panel. Commons holds nothing freely licensed newer than June 2022 — the
+  refresh path is documented in provenance row 3b.
+- **Strip re-curated for human scale**: a scan of the entire Commons Dangote
+  category (skin-tone signature + description metadata) found exactly one
+  freely licensed photo with people — the delivery of the 3,000-ton RFCC
+  regenerator, where workers beside the vessel give the scale. The strip now
+  leads with **Aliko Dangote on site at Lekki** (Oct 2022, CC BY-SA 4.0,
+  categorized in Commons' "Aliko Dangote" + "Dangote Refinery" categories —
+  the only freely licensed on-site photo of him at the plant), followed by
+  the regenerator delivery and the preheating train; captions/credits state
+  exactly what each photo documents.
+- **Section 03 lead photo → the crude tanker**: the main image is now
+  "Vessel at Dangote refinery site, Lagos" (GodwinPaya, CC BY-SA 4.0) with a
+  caption tying it to the optimization story — the crude the optimizer buys
+  arrives as one of these cargoes — while keeping the cited FCC-severity
+  fact; the retired CDU close-up is documented in CREDITS.md.
 
 ### Added
 - **Real refinery imagery, credited** (dashboard): two CC BY-SA 4.0 photos of
