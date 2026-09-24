@@ -655,10 +655,33 @@ def _(SC, mo):  # 03 · Charts — light brand plotly template (navy/red).
 @app.cell
 def _(mo):
     # 04 · Risk — precomputed table + committed figures (rendered as plates).
+    import base64 as _rb64
     import json as _sjson
     from pathlib import Path as _spath
 
-    summary = _sjson.loads(_spath("data/derived/scenarios_phase5.json").read_text(encoding="utf-8"))
+    _s4 = _spath("data/derived/scenarios_phase5.json")
+    if _s4.exists():
+        summary = _sjson.loads(_s4.read_text(encoding="utf-8"))
+    else:
+        from pyodide.http import open_url as _risk_open_url
+
+        _base = str(mo.notebook_location()).rstrip("/")
+        summary = _sjson.loads(
+            _risk_open_url(f"{_base}/public/data/derived/scenarios_phase5.json").read()
+        )
+
+    def _risk_img(rel):
+        """Local path locally; in WASM, fetch from public/ as a data URI
+        (mo.image can't resolve page URLs from the Pyodide worker)."""
+        p = _spath(rel)
+        if p.exists():
+            return rel
+        from pyodide.http import open_url as _img_open_url
+
+        _base = str(mo.notebook_location()).rstrip("/")
+        _b = _rb64.b64encode(_img_open_url(f"{_base}/public/{rel}").read()).decode()
+        return f"data:image/png;base64,{_b}"
+
     p_loss = summary["probability_of_loss"]
     _rows = "".join(
         f"<tr><td>{k}</td><td>{v}</td></tr>"
@@ -693,8 +716,14 @@ def _(mo):
                 "scenario turns that tail <b>positive</b> — flexibility is a risk "
                 "lever, not just a profit lever.</div></div>"
             ),
-            mo.image("docs/assets/margin_fan.png", width=760),
-            mo.image("docs/assets/tornado_margin.png", width=760),
+            mo.image(
+                _risk_img("docs/assets/margin_fan.png"),
+                width=760,
+            ),
+            mo.image(
+                _risk_img("docs/assets/tornado_margin.png"),
+                width=760,
+            ),
             mo.Html(
                 '<div class="legend">Fan: margin distribution per year under '
                 "bootstrapped prices · Tornado: margin sensitivity to each price "
