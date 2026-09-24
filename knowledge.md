@@ -43,15 +43,24 @@ check the server log for the token line before touching code.
    count-up animations, per-product margin waterfall, hover drill-downs.
    ⚠️ Commons rate limit: bulk image fetches hit HTTP 429 — throttle with
    retries (15–30 s backoff) when pulling more assets.
-2. **HF deploy — PARTIALLY DONE 2026-09-24.** ✅ Portfolio Static Space live:
-   https://huggingface.co/spaces/JBZABC/dangote-optimizer-portfolio (HF auth
-   works from stored huggingface_hub credentials — user `JBZABC`; NOT in
-   `.env`). ⚠️ **Interactive Docker Space blocked: HF now requires PRO for
-   Docker Spaces on free accounts** (API error at create_repo). Options: PRO
-   subscription, or leave the dashboard repo-run (portfolio already links
-   it). Runbook + assembly stay ready (`deploy/hf-push-runbook.md`,
-   `scripts/build_space_root.py`). GitHub README Space badge still to add
-   (portfolio badge makes sense now).
+2. **Free interactive hosting — WASM → GitHub Pages BETA (2026-09-24).**
+   Live: https://batestguy.github.io/dangote-refinery-optimizer/ (gh-pages
+   branch = marimo `html-wasm` export of app/app.py; 29 MB; app.py carries a
+   PEP 723 WASM block + pyodide.http `_read_bytes_*` shims + a micropip
+   install of the bundled dangote_opt wheel — rebuild: `uv build --wheel` →
+   copy into `app/wheels/` → `echo n | uv run marimo export html-wasm
+   app/app.py -o output/wasm_vN --mode run` → force-push that dir to
+   gh-pages). ⚠️ UNVERIFIED IN BROWSER: this box's CDN connection kept
+   aborting the Pyodide binary download ("Network error: Response body
+   loading was aborted" — same flakiness as FX timeouts); a visitor on a
+   stable connection must confirm boot + Run. Also: HF portfolio Static
+   Space live (JBZABC/dangote-optimizer-portfolio); **Docker Spaces need
+   PRO** — do not re-litigate. pyodide gotchas learned: use
+   `pyodide.http.open_url` (built-in; the third-party shim's open_url
+   doesn't exist), build URLs as strings (pathlib collapses `//`), micropip
+   needs ABSOLUTE wheel URLs, `public/` must sit next to the notebook
+   (`app/public/`), PEP 723 in the notebook triggers a sandbox prompt on
+   export (answer `n`).
 3. **Phase 7 remainder:** interview talking points, video, blog platform
    choice (spec §8). `docs/executive-summary.md` + `docs/blog-post.md` are
    publication-ready drafts.

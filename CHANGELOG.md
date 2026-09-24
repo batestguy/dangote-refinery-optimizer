@@ -5,6 +5,19 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **WASM interactive dashboard beta on GitHub Pages**
+  (https://batestguy.github.io/dangote-refinery-optimizer/): the full marimo
+  app exported via `html-wasm` — Python runs in the visitor's browser
+  (Pyodide), no server, no sleep, no PRO tier. `app/app.py` gains a PEP 723
+  WASM dependency block, `pyodide.http` read shims for data/images (files
+  bundled under the export's `public/`), and an in-browser micropip install
+  of the `dangote_opt` wheel. ⚠️ Beta: boot verified up to package install;
+  the final in-browser run could not be confirmed from this box (its CDN
+  connection repeatedly aborted the Pyodide binary download — network
+  flakiness, not an app error). Verify from a stable connection; the
+  repo-run app remains the reference experience.
+
+### Added
 - **HF Static portfolio Space live**
   ([JBZABC/dangote-optimizer-portfolio](https://huggingface.co/spaces/JBZABC/dangote-optimizer-portfolio)):
   headline-results table, methodology credibility section, links to the repo.
