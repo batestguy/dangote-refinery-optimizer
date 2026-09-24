@@ -1,0 +1,21 @@
+{
+  "artifact": "data/derived/ticker_latest.json",
+  "generated_utc": "2026-09-23T08:13:08+00:00",
+  "quotes": {
+    "ngn_usd": {
+      "label": "NGN/USD",
+      "value": 1328.371271,
+      "as_of": "Wed, 23 Sep 2026 00:02:31 +0000",
+      "source": "open.er-api.com",
+      "stale": false
+    },
+    "wti_spot": {
+      "label": "WTI spot",
+      "value": 107.02,
+      "as_of": "2026-09-15",
+      "source": "EIA v2 petroleum/pri/spt (EPCWTI, YCUOK, daily)",
+      "stale": false
+    }
+  },
+  "failures": []
+}
