@@ -1,0 +1,56 @@
+{
+  "n_iterations": 10000,
+  "seed": 20260919,
+  "base_margin": 15.673249233600004,
+  "mean_margin": 17.67860923710084,
+  "margin_std": 8.291297887817922,
+  "var_pct": 6.254020207968165,
+  "cvar_pct": 1.4211708808812762,
+  "fixed_blend_mean": 15.120197903584474,
+  "fixed_var_pct": 4.055043640550963,
+  "fixed_cvar_pct": -3.5049129392406284,
+  "reopt_value_mean": 2.558411333516372,
+  "probability_of_loss": 0.0079,
+  "avg_severity": 1.0,
+  "switch_share": {
+    "Bonny Light": 0.0169,
+    "Forcados": 0.4785,
+    "Qua Iboe": 0.0,
+    "Alaska North Slope": 0.5046,
+    "Thunder Horse": 0.0
+  },
+  "tornado": {
+    "gasoline": [
+      12.791407946120003,
+      18.743889897600013
+    ],
+    "diesel": [
+      13.811632974239998,
+      18.528115705312004
+    ],
+    "jet": [
+      14.552605233600005,
+      16.982346991919997
+    ],
+    "petrochem": [
+      14.204991791919994,
+      17.847673233600005
+    ]
+  },
+  "brent_cost_sensitivity": -1.0,
+  "runtime_s": 103.41715340001974,
+  "provenance": {
+    "shock_source": "EIA monthly dlog, block-of-12 bootstrap (2015-2025)",
+    "cost_linkage": "Brent draw shifts all crude costs additively by Brent_ref*(f-1); differentials preserved; argmax unchanged",
+    "petrochem": "disclosed placeholder, constant across scenarios",
+    "fx_demand_scope": "USD single-period price-taker; no FX/demand channel (spec 7)"
+  },
+  "base_blend": {
+    "Bonny Light": 0.0,
+    "Forcados": 0.0,
+    "Qua Iboe": 0.0,
+    "Alaska North Slope": 1.0,
+    "Thunder Horse": 0.0
+  },
+  "base_severity": 1.0
+}
