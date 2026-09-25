@@ -26,8 +26,68 @@ app = marimo.App(width="medium")
 
 
 @app.cell
-def _():
+async def _():
+    import sys
+
     import marimo as mo
+
+    # WASM bootstrap (GitHub Pages / Pyodide). Every other cell depends on this
+    # one through `mo`/`np`, so it finishes before any of them run. Locally and
+    # on the Space it is a no-op. In the browser there is no repo on disk, so:
+    #   1. install the app's own wheel (deps=False: its metadata pulls
+    #      datasets/pdfplumber, which are build-time only and don't load in
+    #      Pyodide) plus the runtime deps the package imports internally;
+    #   2. copy the committed artifacts from public/ into the virtual FS at
+    #      their repo-relative paths, so every Path(...) read below works
+    #      unchanged. Keep _WASM_FILES in sync with app/public/.
+    if sys.platform == "emscripten":
+        from pathlib import Path as _wPath
+
+        import micropip
+        from pyodide.http import pyfetch
+
+        mo.output.replace(
+            mo.callout(
+                mo.md(
+                    "**Loading the optimizer in your browser…** First visit downloads "
+                    "the scientific Python stack (~1–2 min); it is cached afterwards."
+                ),
+                kind="info",
+            )
+        )
+        _base = str(mo.notebook_location()).rstrip("/")
+        await micropip.install(
+            ["numpy", "pandas", "pyarrow", "scipy", "scikit-learn", "plotly"]
+            + ["python-dotenv", "requests"]
+        )
+        await micropip.install(
+            f"{_base}/public/wheels/dangote_refinery_optimizer-0.1.0-py3-none-any.whl",
+            deps=False,
+        )
+        _WASM_FILES = [
+            "data/derived/costs_phase2.json",
+            "data/derived/prices_phase2.json",
+            "data/derived/scenarios_phase5.json",
+            "data/derived/sensitivity_phase4.json",
+            "data/derived/slate_phase1.parquet",
+            "data/derived/ticker_latest.json",
+            "docs/assets/credited/cdu_unit.jpg",
+            "docs/assets/credited/procedures_a.jpg",
+            "docs/assets/credited/procedures_b.jpg",
+            "docs/assets/credited/procedures_c.jpg",
+            "docs/assets/credited/refinery_site_hero.jpg",
+            "docs/assets/margin_fan.png",
+            "docs/assets/tornado_margin.png",
+        ]
+        for _rel in _WASM_FILES:
+            _resp = await pyfetch(f"{_base}/public/{_rel}")
+            if not _resp.ok:
+                raise RuntimeError(f"WASM bootstrap: {_rel} -> HTTP {_resp.status}")
+            _dest = _wPath(_rel)
+            _dest.parent.mkdir(parents=True, exist_ok=True)
+            _dest.write_bytes(await _resp.bytes())
+        mo.output.clear()
+
     import numpy as np
 
     return mo, np
@@ -659,27 +719,13 @@ def _(mo):
     import json as _sjson
     from pathlib import Path as _spath
 
-    _s4 = _spath("data/derived/scenarios_phase5.json")
-    if _s4.exists():
-        summary = _sjson.loads(_s4.read_text(encoding="utf-8"))
-    else:
-        from pyodide.http import open_url as _risk_open_url
-
-        _base = str(mo.notebook_location()).rstrip("/")
-        summary = _sjson.loads(
-            _risk_open_url(f"{_base}/public/data/derived/scenarios_phase5.json").read()
-        )
+    summary = _sjson.loads(_spath("data/derived/scenarios_phase5.json").read_text(encoding="utf-8"))
 
     def _risk_img(rel):
-        """Local path locally; in WASM, fetch from public/ as a data URI
-        (mo.image can't resolve page URLs from the Pyodide worker)."""
-        p = _spath(rel)
-        if p.exists():
-            return rel
-        from pyodide.http import open_url as _img_open_url
-
-        _base = str(mo.notebook_location()).rstrip("/")
-        _b = _rb64.b64encode(_img_open_url(f"{_base}/public/{rel}").read()).decode()
+        """Inline the PNG as a data URI: works the same locally and in WASM,
+        where the first cell has copied it into the virtual FS (a bare path
+        would be treated as a page URL the Pyodide worker can't resolve)."""
+        _b = _rb64.b64encode(_spath(rel).read_bytes()).decode()
         return f"data:image/png;base64,{_b}"
 
     p_loss = summary["probability_of_loss"]
