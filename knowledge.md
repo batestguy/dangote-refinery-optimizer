@@ -36,9 +36,14 @@ check the server log for the token line before touching code.
 **Next-session queue (in order):**
 1. **UI polish remainder.** Brand retheme DONE 2026-09-24 (Step 20); fan/
    tornado rebrand + tornado label-overlap fix + section-03 procedures photo
-   strip DONE 2026-09-24 (Step 21). Still open: Run-button loading UX
-   (`mo.status.spinner()` around the DE — currently silent for ~8–15 s);
-   responsive/mobile pass; contrast/accessibility audit
+   strip DONE 2026-09-24 (Step 21). **DONE 2026-09-25:** Run-button
+   spinner; mobile pass (Pixel 7 emulation, 412 px: no horizontal overflow;
+   `.duo` stacks under 900 px; hero step titles were white-on-white via
+   `.hero .step b` — fixed; tornado redrawn as interactive plotly from the
+   committed JSON, fan PNG scrolls sideways in `.figscroll`; plotly toolbar
+   off via `mo.ui.plotly(..., config={"displayModeBar": False})` — CSS
+   can't reach it). Not tested on real iOS Safari (memory limits likely the
+   risk there). Still open: contrast/accessibility audit
    (ui-geometry-audit + web-design-guidelines skills exist); possible
    count-up animations, per-product margin waterfall, hover drill-downs.
    ⚠️ Commons rate limit: bulk image fetches hit HTTP 429 — throttle with

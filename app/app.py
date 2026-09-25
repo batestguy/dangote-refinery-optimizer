@@ -115,7 +115,6 @@ async def _():
             "docs/assets/credited/procedures_c.jpg",
             "docs/assets/credited/refinery_site_hero.jpg",
             "docs/assets/margin_fan.png",
-            "docs/assets/tornado_margin.png",
         ]
         for _rel in _WASM_FILES:
             _resp = await pyfetch(f"{_base}/public/{_rel}")
@@ -202,7 +201,7 @@ def _(mo):
                text-transform: uppercase; color: #fff; }
     .hero h1 .oil { color: #ff8d7a; }
     .hero p { margin: 6px 0 12px; color: #cdd2f2; max-width: 68ch; }
-    .hero p b, .hero .step b { color: #fff; }
+    .hero p b { color: #fff; }
     .h-credit { position: absolute; right: 12px; bottom: 10px;
                 font-family: var(--mono); font-size: 10px; letter-spacing: .04em;
                 color: rgba(255,255,255,.85); background: rgba(23,29,60,.55);
@@ -300,7 +299,21 @@ def _(mo):
     .strip .s-credit a { color: var(--navy); }
     .strip .s-cap { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
     .strip .s-cap b { color: var(--text); }
-    @media (max-width: 900px) { .strip { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) {
+      .strip, .duo { grid-template-columns: 1fr; }
+      .hero { padding: 22px 18px; }
+      .hero h1 { font-size: 34px; }
+    }
+
+    /* static figure that keeps a readable size on phones: scrolls sideways
+       inside its own box instead of shrinking the labels */
+    .figscroll { overflow-x: auto; -webkit-overflow-scrolling: touch;
+                 background: var(--surface); border: 1px solid var(--border);
+                 border-radius: 12px; padding: 8px; max-width: 780px; }
+    .figscroll img { display: block; width: 100%; min-width: 640px; height: auto; }
+    .swipe { display: none; font-family: var(--mono); font-size: 11px;
+             color: var(--muted); margin: 4px 0 0; }
+    @media (max-width: 700px) { .swipe { display: block; } }
     .foot a { color: var(--navy); }
     .deerflow { font-family: var(--mono); font-size: 11px; color: var(--muted);
                 opacity: .75; text-decoration: none; }
@@ -665,7 +678,8 @@ def _(SC, mo):  # 03 · Charts — light brand plotly template (navy/red).
             yaxis=dict(autorange="reversed"),
             xaxis_range=[0, 112],
         )
-        return fig
+        # no toolbar: on phones it sits on top of the axis labels
+        return mo.ui.plotly(fig, config={"displayModeBar": False})
 
     _diet = sorted(SC["base_blend"].items(), key=lambda kv: -kv[1])
     _switch = sorted(SC["switch_share"].items(), key=lambda kv: -kv[1])
@@ -766,6 +780,75 @@ def _(mo):
         _b = _rb64.b64encode(_spath(rel).read_bytes()).decode()
         return f"data:image/png;base64,{_b}"
 
+    def _usd(v):
+        """Money with the sign in front: −$3.50, not $-3.50."""
+        return f"{'−' if v < 0 else ''}${abs(v):.2f}"
+
+    def _tornado_fig():
+        """Interactive tornado from the committed summary: redraws cleanly at
+        any width and shows exact values on tap/hover (the PNG could not)."""
+        import plotly.graph_objects as _tgo
+
+        _base = summary["base_margin"]
+        _items = sorted(summary["tornado"].items(), key=lambda kv: abs(kv[1][1] - kv[1][0]))
+        _names = [k.capitalize() for k, _ in _items]
+        _lo = [min(v) for _, v in _items]
+        _hi = [max(v) for _, v in _items]
+        _fig = _tgo.Figure(
+            [
+                _tgo.Bar(
+                    y=_names,
+                    x=[_base - v for v in _lo],
+                    base=_lo,
+                    orientation="h",
+                    name="worse than base",
+                    marker_color="#f0513a",
+                    text=[f"${v:.2f}" for v in _lo],
+                    textposition="inside",
+                    insidetextanchor="start",
+                    hovertemplate="%{y}: $%{base:.2f}/bbl at the adverse −10% shock<extra></extra>",
+                ),
+                _tgo.Bar(
+                    y=_names,
+                    x=[v - _base for v in _hi],
+                    base=_base,
+                    orientation="h",
+                    name="better than base",
+                    marker_color="#171d64",
+                    text=[f"${v:.2f}" for v in _hi],
+                    textposition="inside",
+                    insidetextanchor="end",
+                    hovertemplate="%{y}: %{text}/bbl at the favorable +10% shock<extra></extra>",
+                ),
+            ]
+        )
+        _fig.add_vline(
+            x=_base,
+            line_dash="dash",
+            line_color="#171d3c",
+            annotation_text=f"base ${_base:.2f}",
+            annotation_position="top",
+        )
+        _fig.update_layout(
+            title=dict(
+                text="Tornado: ±10% product-price shocks"
+                "<br><sup>margin after re-optimizing the blend</sup>",
+                x=0,
+                xanchor="left",
+                font=dict(size=15),
+            ),
+            barmode="overlay",
+            height=360,
+            margin=dict(l=10, r=10, t=60, b=40),
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            font=dict(family="IBM Plex Sans, system-ui, sans-serif", color="#3a3f6e", size=12),
+            xaxis=dict(title="Re-optimized margin ($/bbl)", gridcolor="#d8dcef", tickprefix="$"),
+            yaxis=dict(automargin=True),
+            legend=dict(orientation="h", y=-0.22, x=0),
+        )
+        return _fig
+
     p_loss = summary["probability_of_loss"]
     _rows = "".join(
         f"<tr><td>{k}</td><td>{v}</td></tr>"
@@ -779,7 +862,7 @@ def _(mo):
             ("<b>Value of re-optimization</b>", f"<b>+${summary['reopt_value_mean']:.2f}/bbl</b>"),
             (
                 "Fixed-blend CVaR 5%",
-                f"${summary['fixed_cvar_pct']:.2f} (vs {summary['cvar_pct']:.2f})",
+                f"{_usd(summary['fixed_cvar_pct'])} (vs {_usd(summary['cvar_pct'])})",
             ),
         )
     )
@@ -800,18 +883,18 @@ def _(mo):
                 "scenario turns that tail <b>positive</b> — flexibility is a risk "
                 "lever, not just a profit lever.</div></div>"
             ),
-            mo.image(
-                _risk_img("docs/assets/margin_fan.png"),
-                width=760,
+            mo.Html(
+                '<div class="figscroll"><img alt="Margin fan: re-optimized margin '
+                "percentiles across 10,000 bootstrapped price scenarios, by 12-month "
+                f'Brent change" src="{_risk_img("docs/assets/margin_fan.png")}"></div>'
+                '<p class="swipe">↔ swipe the chart to see all of it</p>'
             ),
-            mo.image(
-                _risk_img("docs/assets/tornado_margin.png"),
-                width=760,
-            ),
+            mo.ui.plotly(_tornado_fig(), config={"displayModeBar": False}),
             mo.Html(
                 '<div class="legend">Fan: margin distribution per year under '
-                "bootstrapped prices · Tornado: margin sensitivity to each price "
-                "±20%. Full summary: data/derived/scenarios_phase5.json</div>"
+                "bootstrapped prices · Tornado: margin sensitivity to each product "
+                "price ±10%, blend re-optimized. Full summary: "
+                "data/derived/scenarios_phase5.json</div>"
             ),
         ]
     )
@@ -866,7 +949,11 @@ def _(
 
     # lp_inputs feeds the bridge-exact LP bar even when DE runs the surrogate —
     # the honest comparison the dashboard exists to show.
-    result = run_opt(objective, lp_inputs=(CURVES, COSTS, PRICE_VEC, crude_quals))
+    with mo.status.spinner(
+        title="Optimizing…",
+        subtitle="Differential evolution, then the exact LP check (a few seconds)",
+    ):
+        result = run_opt(objective, lp_inputs=(CURVES, COSTS, PRICE_VEC, crude_quals))
     x, sev, margin_de = result.best_x, result.best_severity, result.best_margin
     x_eq = np.full(CONFIG.n_crudes, 1 / CONFIG.n_crudes)
     margin_eq = objective.margin(x_eq, baseline_severity.value)

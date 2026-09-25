@@ -138,7 +138,8 @@ physical context.
   re-optimized, compared against a *fixed* blend under the same scenarios.
 - **Margin fan:** the re-optimized margin distribution against the 12-month
   Brent change.
-- **Tornado:** margin sensitivity to ±10% shocks in each product price, with
+- **Tornado (interactive):** hover or tap a bar for exact values. It shows
+  margin sensitivity to ±10% shocks in each product price, with
   the blend re-optimized each time. Gasoline moves margin most, diesel second.
 
 ### 05 · Deep re-optimization, live
