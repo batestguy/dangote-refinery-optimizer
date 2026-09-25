@@ -50,7 +50,9 @@ async def _():
             mo.callout(
                 mo.md(
                     "**Loading the optimizer in your browser…** First visit downloads "
-                    "the scientific Python stack (~1–2 min); it is cached afterwards."
+                    "a full scientific Python stack and can take **up to ~5 minutes** "
+                    "(longer on mobile data). Keep this tab open; later visits are "
+                    "faster."
                 ),
                 kind="info",
             )

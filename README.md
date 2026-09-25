@@ -51,11 +51,18 @@ correlated price scenarios.
 
 **▶ https://batestguy.github.io/dangote-refinery-optimizer/**
 
+> ⏳ **Heads-up: the first visit can take up to ~5 minutes to set up.**
+> Your browser downloads a full scientific Python stack (~50–100 MB),
+> and it's slower on mobile data. Keep the tab open; later visits load
+> from cache. If you see "Something went wrong" or a "please reload"
+> message, reload the page (in Brave, turn Shields off for the site).
+> For an instant view, see the screenshots below or run it locally.
+
 The dashboard is a [marimo](https://marimo.io) notebook compiled to
 WebAssembly. Python runs **inside your browser** (via Pyodide), so there is no
 server to wake up and nothing leaves your machine. The trade-off is the first
 visit: the browser downloads Python plus NumPy, pandas, SciPy and
-scikit-learn, which takes **about 1–3 minutes** depending on your connection.
+scikit-learn, which can take **up to ~5 minutes**, depending on your connection.
 Later visits load from the browser cache.
 
 After it loads, scroll to **section 05** and press **⚡ Run deep

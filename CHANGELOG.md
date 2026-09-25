@@ -5,17 +5,17 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
-- **WASM interactive dashboard beta on GitHub Pages**
+- **In-browser interactive dashboard live on GitHub Pages**
   (https://batestguy.github.io/dangote-refinery-optimizer/): the full marimo
   app exported via `html-wasm` — Python runs in the visitor's browser
-  (Pyodide), no server, no sleep, no PRO tier. `app/app.py` gains a PEP 723
-  WASM dependency block, `pyodide.http` read shims for data/images (files
-  bundled under the export's `public/`), and an in-browser micropip install
-  of the `dangote_opt` wheel. ⚠️ Beta: boot verified up to package install;
-  the final in-browser run could not be confirmed from this box (its CDN
-  connection repeatedly aborted the Pyodide binary download — network
-  flakiness, not an app error). Verify from a stable connection; the
-  repo-run app remains the reference experience.
+  (Pyodide), no server, no sleep, no PRO tier. A startup step installs the
+  `dangote_opt` wheel and copies the bundled `public/` data into the
+  browser filesystem; failed package downloads are retried, and a reload
+  notice is shown if they still fail. Phone layout pass: section 03 stacks,
+  hero titles stay visible, the tornado is interactive, the fan chart
+  scrolls horizontally, and Run shows a spinner. The first visit can take
+  up to ~5 minutes (README and the in-app loading notice say so). Verified
+  with Playwright on desktop and Pixel 7 emulation.
 
 ### Added
 - **HF Static portfolio Space live**
