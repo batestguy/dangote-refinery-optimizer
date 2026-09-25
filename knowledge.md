@@ -66,7 +66,9 @@ check the server log for the token line before touching code.
    **Rebuild recipe:** `echo n | uv run marimo export html-wasm app/app.py
    -o output/wasm_vN --mode run` → **copy `app/public/wheels/*.whl` into
    `output/wasm_vN/public/wheels/` (the export drops .whl files)** →
-   verify with Playwright on `python -m http.server` → deploy via a CLEAN
+   `uv run python scripts/patch_wasm_index.py output/wasm_vN` (adds the
+   "up to ~5 min" notice to marimo's loading screen; the in-app callout
+   only appears near the end of the wait) → verify with Playwright on `python -m http.server` → deploy via a CLEAN
    TEMP CLONE of gh-pages (NEVER `git add -A` from inside the export dir).
    Rebuild the wheel (`uv build --wheel`) only when `src/` changes.
 3. **Phase 7 remainder:** interview talking points, video, blog platform

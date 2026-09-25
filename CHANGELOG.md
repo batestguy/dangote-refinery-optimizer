@@ -14,8 +14,10 @@ All notable changes to this project. Format based on Keep a Changelog.
   notice is shown if they still fail. Phone layout pass: section 03 stacks,
   hero titles stay visible, the tornado is interactive, the fan chart
   scrolls horizontally, and Run shows a spinner. The first visit can take
-  up to ~5 minutes (README and the in-app loading notice say so). Verified
-  with Playwright on desktop and Pixel 7 emulation.
+  up to ~5 minutes: the README says so, and `scripts/patch_wasm_index.py`
+  (run after export) puts a notice with an elapsed-time counter on marimo's
+  loading screen, because the in-app callout only appears near the end of
+  the wait. Verified with Playwright on desktop and Pixel 7 emulation.
 
 ### Added
 - **HF Static portfolio Space live**
