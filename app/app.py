@@ -55,10 +55,48 @@ async def _():
                 kind="info",
             )
         )
+        import importlib
+        import importlib.util
+
         _base = str(mo.notebook_location()).rstrip("/")
-        await micropip.install(
-            ["numpy", "pandas", "pyarrow", "scipy", "scikit-learn", "plotly"]
-            + ["python-dotenv", "requests"]
+        # Pyodide's package loader only *logs* a failed download (flaky CDN,
+        # mobile data) instead of raising, which used to leave a silently
+        # broken page. Verify each import and retry what is missing.
+        _needed = {
+            "numpy": "numpy",
+            "pandas": "pandas",
+            "pyarrow": "pyarrow",
+            "scipy": "scipy",
+            "sklearn": "scikit-learn",
+            "plotly": "plotly",
+            "dotenv": "python-dotenv",
+            "requests": "requests",
+        }
+        for _attempt in range(3):
+            importlib.invalidate_caches()
+            _missing = [
+                _pkg for _mod, _pkg in _needed.items() if importlib.util.find_spec(_mod) is None
+            ]
+            if not _missing:
+                break
+            try:
+                await micropip.install(_missing)
+            except Exception:  # noqa: BLE001 — re-checked below
+                pass
+        importlib.invalidate_caches()
+        _missing = [
+            _pkg for _mod, _pkg in _needed.items() if importlib.util.find_spec(_mod) is None
+        ]
+        mo.stop(
+            bool(_missing),
+            mo.callout(
+                mo.md(
+                    "**Couldn't download all of the Python packages** "
+                    f"({', '.join(_missing)}). This is usually a flaky connection: "
+                    "please reload the page."
+                ),
+                kind="danger",
+            ),
         )
         await micropip.install(
             f"{_base}/public/wheels/dangote_refinery_optimizer-0.1.0-py3-none-any.whl",
