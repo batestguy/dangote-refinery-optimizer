@@ -478,7 +478,7 @@ def _(mo):
             <span class="chip">EIA PRICES</span>
             <span class="chip">QUALITY SPECS ENFORCED</span>
             <span class="chip">DE ≡ LP</span>
-            <span class="chip">137 OFFLINE TESTS</span>
+            <span class="chip">140 OFFLINE TESTS</span>
           </div>
           <div class="h-credit">Photo: GodwinPaya, CC BY-SA 4.0, via
             <a href="https://commons.wikimedia.org/wiki/File:Palm_trees_beside_Dangote_Refinery_at_leki_village_Lagos_Nigeria.jpg" target="_blank">Commons</a></div>
@@ -1078,7 +1078,7 @@ def _(PRICES, SURROGATE_INFO, mo):
                 """
                 ```bash
                 uv sync                                        # locked env (uv.lock committed)
-                PYTHONUTF8=1 uv run pytest                     # 137 offline tests
+                PYTHONUTF8=1 uv run pytest                     # 140 offline tests
                 PYTHONUTF8=1 uv run python scripts/train_surrogate.py    # ~5 s, deterministic
                 PYTHONUTF8=1 uv run python scripts/sensitivity_study.py  # 100 DE seeds
                 PYTHONUTF8=1 uv run python scripts/run_scenarios.py      # 10k Monte Carlo
