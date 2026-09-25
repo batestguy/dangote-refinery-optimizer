@@ -287,5 +287,45 @@
         configurable: false,
       });
     </script>
-  </body>
+  <!-- dangote-wait-notice -->
+<style>
+  #dangote-wait {
+    position: fixed; left: 16px; right: 16px; bottom: 56px; z-index: 2147483000;
+    max-width: 520px; margin: 0 auto; padding: 14px 16px; border-radius: 10px;
+    background: #171d64; color: #fff; border-top: 4px solid #f0513a;
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    box-shadow: 0 6px 24px rgba(23, 29, 100, 0.25);
+  }
+  #dangote-wait b { font-weight: 600; }
+  #dangote-wait .dw-time { opacity: 0.75; font-variant-numeric: tabular-nums; }
+</style>
+<div id="dangote-wait" role="status" aria-live="polite">
+  <b>Setting up the optimizer in your browser.</b> The first visit downloads a
+  full scientific Python stack and can take <b>up to ~5 minutes</b> (longer on
+  mobile data). Keep this tab open; later visits are faster.
+  <div class="dw-time">Elapsed: <span id="dangote-wait-t">0:00</span></div>
+</div>
+<script>
+  (function () {
+    var box = document.getElementById("dangote-wait");
+    var t = document.getElementById("dangote-wait-t");
+    var t0 = Date.now();
+    var timer = setInterval(function () {
+      // Gone as soon as any cell output has rendered (the app's own
+      // bootstrap callout takes over from there).
+      var outs = document.querySelectorAll('[id^="output-"]');
+      var shown = Array.prototype.some.call(outs, function (el) {
+        return el.innerText.trim() !== "";
+      });
+      if (shown) {
+        clearInterval(timer);
+        box.remove();
+        return;
+      }
+      var s = Math.floor((Date.now() - t0) / 1000);
+      t.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    }, 1000);
+  })();
+</script>
+</body>
 </html>
