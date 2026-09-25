@@ -3,7 +3,7 @@
 [![CI](https://github.com/batestguy/dangote-refinery-optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/batestguy/dangote-refinery-optimizer/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/live%20demo-GitHub%20Pages-171d64)](https://batestguy.github.io/dangote-refinery-optimizer/)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-137%20offline-0e9f6e)
+![Tests](https://img.shields.io/badge/tests-140%20offline-0e9f6e)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 Choose the **crude diet** and **FCC severity** that maximize margin for a
@@ -19,6 +19,10 @@ correlated price scenarios.
 > the refinery's actual operations. Every number is either integrated from a
 > published curve, cited to a source, or labeled **ASSUMED / PLACEHOLDER**
 > with a reason and a way to refresh it.
+
+📄 **Short on time? Read the 4-page [project brief (PDF)](docs/project-brief.pdf).**
+It covers the workflow, results, the ML evaluation, known shortcomings and next
+steps, mostly as tables.
 
 ![Dashboard overview](docs/assets/screenshots/00_overview.png)
 
@@ -90,7 +94,7 @@ uv run marimo run app/app.py
 | Downside risk (10k correlated scenarios) | VaR 5% **$6.25** · CVaR 5% **$1.42** · P(loss) **0.8%** |
 | Does the best diet change with prices? | Yes, between two regimes: ANS is optimal in **50.5%** of scenarios and Forcados in **47.9%** |
 | Runtime | DE ≈ **0.85 s** on the exact model, ≈ 3.4 s through the surrogate. The 10k-scenario Monte Carlo takes ≈ 85–105 s. |
-| Reproducibility | Seeded throughout (`20260919`). The 100-seed DE sweep has margin σ = **$0.0015/bbl**. 137 offline tests run in CI on every push. |
+| Reproducibility | Seeded throughout (`20260919`). The 100-seed DE sweep has margin σ = **$0.0015/bbl**. 140 offline tests run in CI on every push. |
 
 ---
 
@@ -502,7 +506,7 @@ app/app.py             the marimo dashboard (same file runs locally, on a server
 app/public/            data, figures, photos and the package wheel for the in-browser build
 scripts/               build_slate · build_costs · build_prices · train_surrogate ·
                        sensitivity_study · run_scenarios · build_space_root
-tests/                 137 offline tests
+tests/                 140 offline tests
 data/derived/          committed artifacts: everything runs offline from these
 ```
 
@@ -521,7 +525,7 @@ Everything is free tooling. [uv](https://docs.astral.sh/uv/) manages Python
 git clone https://github.com/batestguy/dangote-refinery-optimizer.git
 cd dangote-refinery-optimizer
 uv sync                          # reproducible env from uv.lock
-uv run pytest                    # 137 tests, fully offline, ~15–30 s
+uv run pytest                    # 140 tests, fully offline, ~15–30 s
 uv run marimo run app/app.py     # the dashboard at http://localhost:2718
 ```
 
@@ -573,6 +577,7 @@ One notebook, `app/app.py`, runs in three places:
 
 | Document | What's in it |
 |---|---|
+| [`docs/project-brief.pdf`](docs/project-brief.pdf) | 4-page PDF brief: workflow, results, ML evaluation, shortcomings, next steps |
 | [`docs/methodology.md`](docs/methodology.md) | Every constant in the model, with citations |
 | [`docs/data_provenance.md`](docs/data_provenance.md) | Source-by-source verification table |
 | [`docs/problem_statement.md`](docs/problem_statement.md) | Formulation, locked decisions, success gates |
