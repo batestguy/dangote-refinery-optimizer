@@ -55,6 +55,21 @@ steps, mostly as tables.
 
 **▶ https://batestguy.github.io/dangote-refinery-optimizer/**
 
+### ▶ Watch the 2½-minute walkthrough
+
+[![Play the demo: 650,000 barrels a day](docs/assets/media/demo-thumbnail.jpg)](docs/assets/media/demo.mp4)
+
+150 seconds through the deployed dashboard: the decision, the headline numbers,
+the diet the optimizer picks, the 10,000-scenario risk tail, and a real solver
+run in the browser. Click the thumbnail to play or download — `demo.mp4` is
+28 MB, 1920×1080, 60 fps, captions burned in ([`.srt` sidecar](docs/assets/media/demo.srt)).
+
+Built from a scripted capture of the live page
+([`scripts/record_demo.py`](scripts/record_demo.py),
+[`scripts/build_demo_video.py`](scripts/build_demo_video.py); timeline and
+shot list in [`demo-video-spec.md`](demo-video-spec.md)). Background music is
+looped from 0:55 of the provided track.
+
 > ⏳ **Heads-up: the first visit can take up to ~5 minutes to set up.**
 > Your browser downloads a full scientific Python stack (~50–100 MB),
 > and it's slower on mobile data. Keep the tab open; later visits load

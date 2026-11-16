@@ -5,6 +5,17 @@ All notable changes to this project. Format based on Keep a Changelog.
 ## [Unreleased]
 
 ### Added
+- **2½-minute demo video of the live dashboard**
+  (`docs/assets/media/demo.mp4`, 1920×1080/60 fps, captions burned in plus a
+  `.srt` sidecar): four full-screen beat cards — the decision, the method, the
+  stakes, what it proves — interleaved with real footage of the deployed page,
+  including a genuine slider drag and Run click that lands a DE solution in a
+  few seconds. Captured via CDP screencast with an injected cursor and
+  assembled by `scripts/build_demo_video.py`; shot list, timing and capture
+  pipeline live in `demo-video-spec.md`. Linked from the README's live-demo
+  section so a reviewer can watch without waiting out the Pyodide boot.
+
+### Added
 - **In-browser interactive dashboard live on GitHub Pages**
   (https://batestguy.github.io/dangote-refinery-optimizer/): the full marimo
   app exported via `html-wasm` — Python runs in the visitor's browser

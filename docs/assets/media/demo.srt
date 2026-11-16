@@ -1,0 +1,111 @@
+1
+00:00:00,200 --> 00:00:04,800
+I built an optimizer for a 650,000 barrel-a-day refinery.
+
+2
+00:00:05,000 --> 00:00:09,800
+At that scale, $1 per barrel of margin is about $237 million a year.
+
+3
+00:00:10,000 --> 00:00:14,800
+The decision: which of five crudes, in what blend, at what cracking severity.
+
+4
+00:00:15,500 --> 00:00:22,500
+This is the console. Five real published assays, EIA prices, quality specs enforced.
+
+5
+00:00:23,000 --> 00:00:29,500
+First visit downloads Python in your browser — this starts after it loads.
+
+6
+00:00:30,200 --> 00:00:35,600
+At base prices the optimum is ~100% Alaska North Slope at maximum severity: $15.67 a barrel.
+
+7
+00:00:36,000 --> 00:00:41,400
+Eleven percent above a naive equal-weight blend — and it matches the exact LP optimum to under half a cent.
+
+8
+00:00:41,600 --> 00:00:45,800
+Re-optimizing as prices move is worth another $2.56 a barrel.
+
+9
+00:00:46,200 --> 00:00:50,600
+Assays → TBP cut-point bridge → four product yields.
+
+10
+00:00:50,800 --> 00:00:55,400
+Extra Trees learn that physics; differential evolution searches it; an exact LP checks the answer.
+
+11
+00:00:55,600 --> 00:00:59,800
+Then 10,000 price scenarios — and 140 tests pass offline in CI.
+
+12
+00:01:00,200 --> 00:01:05,600
+Section 03: what it chose — and how often that choice changes.
+
+13
+00:01:05,800 --> 00:01:12,000
+Across 10,000 price worlds Alaska North Slope wins half the time; Forcados takes most of the rest.
+
+14
+00:01:12,200 --> 00:01:17,800
+So the diet isn't a fixed answer. It's a rule that depends on crack spreads.
+
+15
+00:01:18,200 --> 00:01:22,400
+Section 04 is the part most demos skip: risk.
+
+16
+00:01:22,600 --> 00:01:28,000
+Re-optimizing every scenario turns the worst 5% tail from −$3.50 to +$1.42.
+
+17
+00:01:28,200 --> 00:01:31,800
+Only 0.8% of price worlds lose money.
+
+18
+00:01:32,200 --> 00:01:36,800
+Flexibility isn't just margin. It's downside protection.
+
+19
+00:01:37,000 --> 00:01:41,800
+And because the physics are affine, the answer is provable — not just plausible.
+
+20
+00:01:42,200 --> 00:01:45,800
+At the bottom, I set the baseline severity, then press Run.
+
+21
+00:01:46,200 --> 00:01:49,600
+This is a real click — the solver runs in the browser.
+
+22
+00:01:50,300 --> 00:01:55,700
+Differential evolution searches the diet and the severity, then checks itself against the exact LP.
+
+23
+00:01:56,300 --> 00:02:00,200
+DE and LP land on the same margin. That's the honest bar.
+
+24
+00:02:00,400 --> 00:02:03,700
+Solve time printed on screen — inside the 30-second budget.
+
+25
+00:02:04,500 --> 00:02:13,100
+ML surrogate, global optimization, live deployment — and the discipline to publish where it's weak.
+
+26
+00:02:14,400 --> 00:02:18,200
+Live demo: batestguy.github.io/dangote-refinery-optimizer
+
+27
+00:02:18,400 --> 00:02:23,000
+Code and full methodology: github.com/batestguy/dangote-refinery-optimizer
+
+28
+00:02:23,400 --> 00:02:25,600
+Project by JJMB · 2026

@@ -32,6 +32,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Audio source for the demo video — licensed music, not ours to redistribute
+*.mp3
+
 # Agent tooling artifacts (not project code)
 .agents/
 .playwright-cli/
